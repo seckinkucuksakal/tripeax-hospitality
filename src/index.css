@@ -1,0 +1,114 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display:ital@0;1&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 220 26% 14%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 220 26% 14%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 26% 14%;
+
+    --primary: 220 26% 14%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 220 14% 96%;
+    --secondary-foreground: 220 26% 14%;
+
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 9% 46%;
+
+    --accent: 160 84% 39%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --coral: 4 91% 69%;
+    --coral-foreground: 0 0% 100%;
+
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 160 84% 39%;
+
+    --radius: 10px;
+
+    --green: 160 84% 39%;
+    --green-light: 160 40% 94%;
+
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 220 26% 25%;
+    --sidebar-primary: 220 26% 14%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 14% 96%;
+    --sidebar-accent-foreground: 220 26% 25%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 160 84% 39%;
+
+    --font-serif: 'DM Serif Display', Georgia, serif;
+    --font-sans: 'DM Sans', system-ui, sans-serif;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1, h2, h3 {
+    text-wrap: balance;
+  }
+
+  ::selection {
+    background: hsl(160 84% 39% / 0.15);
+    color: hsl(var(--foreground));
+  }
+
+  input:focus, select:focus {
+    border-color: hsl(var(--accent)) !important;
+    box-shadow: 0 0 0 3px hsl(160 84% 39% / 0.15);
+  }
+}
+
+@layer utilities {
+  .font-serif {
+    font-family: var(--font-serif);
+  }
+
+  .font-sans {
+    font-family: var(--font-sans);
+  }
+
+  .text-hero {
+    font-size: clamp(2.8rem, 6vw, 4rem);
+    line-height: 1.08;
+    letter-spacing: -0.01em;
+  }
+
+  .text-display {
+    font-size: clamp(2rem, 4vw, 2.75rem);
+    line-height: 1.1;
+    letter-spacing: -0.01em;
+  }
+
+  .micro-border {
+    box-shadow: 0 0 0 1px hsl(var(--border)), 0 4px 20px -4px hsl(220 20% 10% / 0.06);
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+}
