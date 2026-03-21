@@ -467,11 +467,8 @@ export function BookDemoModal() {
           ? hotelStep3.pms
           : "";
 
-    let description = step5.notes.trim();
-    if (businessType === "hotel" && hotelStep3.rooms) {
-      const roomsLine = `Rooms (all properties): ${hotelStep3.rooms}`;
-      description = description ? `${description}\n${roomsLine}` : roomsLine;
-    }
+    const roomsAcrossAllProperties =
+      businessType === "hotel" ? hotelStep3.rooms : "";
 
     const calendarState = {
       businessType,
@@ -500,7 +497,8 @@ export function BookDemoModal() {
         locations,
         callsPerDay,
         reservationSystem,
-        description,
+        roomsAcrossAllProperties,
+        description: step5.notes.trim(),
       });
       closeBookDemo();
       navigate("/book-demo/calendar", { state: calendarState });

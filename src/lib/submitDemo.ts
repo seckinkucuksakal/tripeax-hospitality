@@ -1,3 +1,15 @@
+/**
+ * SheetDB / Google Sheet row 1 headers (exact match required):
+ * time | first name | last name | email | phone number | business name | business type |
+ * what are you looking for | number of locations or properties | estimated daily calls |
+ * reservation system or PMS | rooms across all properties | Description
+ *
+ * Mapping from modal:
+ * - number of locations or properties → restaurant: location band; hotel: property count band
+ * - estimated daily calls → restaurant: calls band; hotel: empty
+ * - reservation system or PMS → restaurant: reservation tool; hotel: PMS
+ * - rooms across all properties → restaurant: empty; hotel: rooms band (all properties)
+ */
 export type DemoFormData = {
   firstName: string;
   lastName: string;
@@ -9,6 +21,7 @@ export type DemoFormData = {
   locations: string;
   callsPerDay: string;
   reservationSystem: string;
+  roomsAcrossAllProperties: string;
   description: string;
 };
 
@@ -58,9 +71,10 @@ export async function submitDemo(data: DemoFormData): Promise<void> {
           "business name": data.businessName,
           "business type": data.businessType,
           "what are you looking for": data.goal,
-          "how many locations do you have": data.locations,
-          "calls per day": data.callsPerDay,
-          "reservation system": data.reservationSystem,
+          "number of locations or properties": data.locations,
+          "estimated daily calls": data.callsPerDay,
+          "reservation system or PMS": data.reservationSystem,
+          "rooms across all properties": data.roomsAcrossAllProperties,
           Description: data.description,
         },
       ],
