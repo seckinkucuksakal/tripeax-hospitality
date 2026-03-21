@@ -177,13 +177,13 @@ const MODAL_COPY = {
       "Diger",
     ],
     firstName: "Ad*",
-    firstNamePlaceholder: "Joshua",
+    firstNamePlaceholder: "Ahmet",
     lastName: "Soyad*",
-    lastNamePlaceholder: "King",
+    lastNamePlaceholder: "Yılmaz",
     email: "E-posta*",
-    emailPlaceholder: "joshua@restaurant.com",
+    emailPlaceholder: "ahmet@isletme.com",
     phone: "Telefon Numarasi*",
-    phonePlaceholder: "5XX XXX XXXX",
+    phonePlaceholder: "5XX XXX XX XX",
     phoneInvalid: "Secilen ulke icin gecerli bir telefon numarasi girin.",
     businessName: "Isletme Adi*",
     businessNamePlaceholder: "Restoran veya otel adiniz",
@@ -780,20 +780,29 @@ export function BookDemoModal() {
             {copy.phone}
           </label>
           <div className="flex gap-2">
-            <select
-              value={countryCode}
-              onChange={(e) => {
-                setCountryCode(e.target.value);
-                if (step5.phone.trim()) setPhoneTouched(true);
-              }}
-              className="w-[140px] shrink-0 rounded-lg border border-border bg-background px-2 py-3 text-[14px] text-foreground focus:outline-none focus:ring-2 focus:ring-ring appearance-none cursor-pointer"
-            >
-              {COUNTRY_CODES.map((c) => (
-                <option key={c.code} value={c.code}>
-                  {c.code} {c.dial}
-                </option>
-              ))}
-            </select>
+            {lang === "tr" ? (
+              <div
+                className="flex min-w-[4.5rem] shrink-0 items-center justify-center rounded-lg border border-border bg-muted/40 px-3 py-3 text-[14px] font-medium text-foreground tabular-nums"
+                aria-hidden
+              >
+                +90
+              </div>
+            ) : (
+              <select
+                value={countryCode}
+                onChange={(e) => {
+                  setCountryCode(e.target.value);
+                  if (step5.phone.trim()) setPhoneTouched(true);
+                }}
+                className="w-[140px] shrink-0 rounded-lg border border-border bg-background px-2 py-3 text-[14px] text-foreground focus:outline-none focus:ring-2 focus:ring-ring appearance-none cursor-pointer"
+              >
+                {COUNTRY_CODES.map((c) => (
+                  <option key={c.code} value={c.code}>
+                    {c.code} {c.dial}
+                  </option>
+                ))}
+              </select>
+            )}
             <input
               required
               type="tel"

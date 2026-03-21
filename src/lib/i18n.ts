@@ -125,11 +125,6 @@ export const translations = {
         },
       },
     },
-    integrations: {
-      eyebrow: "Built for Turkish Hospitality",
-      names: ["TheFork", "Google Reserve", "Cloudbeds", "Mews", "HotelRunner", "OpenTable", "Resy", "Toast POS"],
-      footnote: "Works with the tools you already use. Setup in minutes.",
-    },
     pricing: {
       headline: "Pricing that grows with your revenue.",
       subhead: "Simple, transparent pricing. No hidden fees.",
@@ -526,11 +521,6 @@ export const translations = {
           ],
         },
       },
-    },
-    integrations: {
-      eyebrow: "Türk Hizmet Sektörü İçin Tasarlandı",
-      names: ["TheFork", "Google Reserve", "Cloudbeds", "Mews", "HotelRunner", "OpenTable", "Resy", "Toast POS"],
-      footnote: "Zaten kullandığınız araçlarla çalışır. Dakikalar içinde kurulum.",
     },
     pricing: {
       headline: "Gelirinizle birlikte büyüyen fiyatlandırma.",
