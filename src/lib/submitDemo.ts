@@ -1,14 +1,7 @@
 /**
- * SheetDB / Google Sheet row 1 headers (exact match required):
- * time | first name | last name | email | phone number | business name | business type |
- * what are you looking for | number of locations or properties | estimated daily calls |
- * reservation system or PMS | rooms across all properties | Description
- *
- * Mapping from modal:
- * - number of locations or properties → restaurant: location band; hotel: property count band
- * - estimated daily calls → restaurant: calls band; hotel: empty
- * - reservation system or PMS → restaurant: reservation tool; hotel: PMS
- * - rooms across all properties → restaurant: empty; hotel: rooms band (all properties)
+ * SheetDB JSON keys must match Google Sheet row 1 **exactly** (spacing, capitals, hyphens).
+ * Your sheet uses Title Case + "E-mail" + "What are you Looking for" + "Proporties" spelling.
+ * If you rename columns in the sheet, update the keys in the object below to match.
  */
 export type DemoFormData = {
   firstName: string;
@@ -71,18 +64,18 @@ export async function submitDemo(data: DemoFormData): Promise<void> {
     body: JSON.stringify({
       data: [
         {
-          time: formatTimeForSheet(),
-          "first name": data.firstName,
-          "last name": data.lastName,
-          email: data.email,
-          "phone number": phoneForSheet(data.phone),
-          "business name": data.businessName,
-          "business type": data.businessType,
-          "what are you looking for": data.goal,
-          "number of locations or properties": data.locations,
-          "estimated daily calls": data.callsPerDay,
-          "reservation system or PMS": data.reservationSystem,
-          "rooms across all properties": data.roomsAcrossAllProperties,
+          Time: formatTimeForSheet(),
+          "First Name": data.firstName,
+          "Last Name": data.lastName,
+          "E-mail": data.email,
+          "Phone Number": phoneForSheet(data.phone),
+          "Business Name": data.businessName,
+          "Business Type": data.businessType,
+          "What are you Looking for": data.goal,
+          "Number of Locations or Proporties": data.locations,
+          "Estimated Daily Calls": data.callsPerDay,
+          "Reservation System or PMS": data.reservationSystem,
+          "Rooms Across All Proporties": data.roomsAcrossAllProperties,
           Description: data.description,
         },
       ],
