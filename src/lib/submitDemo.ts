@@ -55,11 +55,19 @@ export async function submitDemo(data: DemoFormData): Promise<void> {
     throw new Error("missing_sheetdb_url");
   }
 
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
+  const bearer = (import.meta.env.VITE_SHEETDB_BEARER_TOKEN as string | undefined)?.trim();
+  if (bearer) {
+    headers.Authorization = bearer.toLowerCase().startsWith("bearer ")
+      ? bearer
+      : `Bearer ${bearer}`;
+  }
+
   const res = await fetch(url, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers,
     body: JSON.stringify({
       data: [
         {
