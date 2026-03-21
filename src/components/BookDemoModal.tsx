@@ -5,10 +5,11 @@ import { ArrowRight, Check, X, ChevronLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useBookDemoModal } from "@/lib/BookDemoModalContext";
 import { useLanguage } from "@/lib/LanguageContext";
+import { submitDemo } from "@/lib/submitDemo";
 import { cn } from "@/lib/utils";
 import tripeaxLogo from "@/assets/tripeax-logo-small.png";
-import restaurantSectionImg from "@/assets/restaurant-section.png";
-import otelSectionImg from "@/assets/otel-section.png";
+import restaurantSectionImg from "@/assets/restaurant.png";
+import otelSectionImg from "@/assets/otel.png";
 
 type BusinessType = "restaurant" | "hotel";
 
@@ -104,6 +105,8 @@ const MODAL_COPY = {
     back: "Back",
     continue: "Continue",
     submit: "Book My Call",
+    submitSending: "Sending…",
+    submitFailed: "We couldn't save your details. Please try again.",
   },
   tr: {
     leftDescription: "Isletmenizi kisaca anlayalim, sonra sizi takvime alalim.",
@@ -194,6 +197,8 @@ const MODAL_COPY = {
     back: "Geri",
     continue: "Devam",
     submit: "Gorusmemi Planla",
+    submitSending: "Gonderiliyor…",
+    submitFailed: "Bilgileriniz kaydedilemedi. Lutfen tekrar deneyin.",
   },
 } as const;
 
@@ -366,6 +371,8 @@ export function BookDemoModal() {
 
   const [countryCode, setCountryCode] = useState(() => (lang === "tr" ? "TR" : "FR"));
   const [phoneTouched, setPhoneTouched] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const selectedCountry = useMemo(
     () => COUNTRY_CODES.find((c) => c.code === countryCode) ?? COUNTRY_CODES[0],
@@ -382,6 +389,8 @@ export function BookDemoModal() {
     setDetails({ firstName: "", lastName: "", email: "" });
     setStep5({ phone: "", businessName: "", notes: "", agreed: false });
     setPhoneTouched(false);
+    setIsSubmitting(false);
+    setSubmitError(null);
   }, [isOpen]);
 
   useEffect(() => {
@@ -440,10 +449,31 @@ export function BookDemoModal() {
     if (step < STEP_COUNT - 1) setStep((s) => s + 1);
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!isModalPhoneValid(step5.phone, countryCode)) return;
     const fullPhone = `${selectedCountry.dial} ${step5.phone.trim()}`;
-    const payload = {
+
+    const locations =
+      businessType === "restaurant"
+        ? restStep3.locations
+        : businessType === "hotel"
+          ? hotelStep3.properties
+          : "";
+    const callsPerDay = businessType === "restaurant" ? restStep3.callsPerDay : "";
+    const reservationSystem =
+      businessType === "restaurant"
+        ? restStep3.reservationSystem
+        : businessType === "hotel"
+          ? hotelStep3.pms
+          : "";
+
+    let description = step5.notes.trim();
+    if (businessType === "hotel" && hotelStep3.rooms) {
+      const roomsLine = `Rooms (all properties): ${hotelStep3.rooms}`;
+      description = description ? `${description}\n${roomsLine}` : roomsLine;
+    }
+
+    const calendarState = {
       businessType,
       interests: Array.from(step2Interests),
       step3:
@@ -456,8 +486,29 @@ export function BookDemoModal() {
       step5: { ...step5, phone: fullPhone },
     };
 
-    closeBookDemo();
-    navigate("/book-demo/calendar", { state: payload });
+    setSubmitError(null);
+    setIsSubmitting(true);
+    try {
+      await submitDemo({
+        firstName: details.firstName.trim(),
+        lastName: details.lastName.trim(),
+        email: details.email.trim(),
+        phone: fullPhone,
+        businessName: step5.businessName.trim(),
+        businessType: businessType === "restaurant" ? "Restaurant" : businessType === "hotel" ? "Hotel" : "",
+        goal: Array.from(step2Interests).join("; "),
+        locations,
+        callsPerDay,
+        reservationSystem,
+        description,
+      });
+      closeBookDemo();
+      navigate("/book-demo/calendar", { state: calendarState });
+    } catch {
+      setSubmitError(copy.submitFailed);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const StepLabel = (
@@ -495,11 +546,11 @@ export function BookDemoModal() {
                   : "border-border hover:border-muted-foreground/40"
               )}
             >
-              <div className="flex items-start gap-3">
+              <div className="flex items-center gap-4">
                 <img
                   src={restaurantSectionImg}
                   alt=""
-                  className="h-12 w-12 shrink-0 rounded-xl object-cover ring-1 ring-border/50"
+                  className="h-[3.25rem] w-[3.25rem] sm:h-[4.75rem] sm:w-[4.75rem] shrink-0 rounded-2xl object-contain"
                 />
                 <div>
                   <div className="font-semibold text-foreground">{copy.restaurantLabel}</div>
@@ -520,11 +571,11 @@ export function BookDemoModal() {
                   : "border-border hover:border-muted-foreground/40"
               )}
             >
-              <div className="flex items-start gap-3">
+              <div className="flex items-center gap-4">
                 <img
                   src={otelSectionImg}
                   alt=""
-                  className="h-12 w-12 shrink-0 rounded-xl object-cover ring-1 ring-border/50"
+                  className="h-[3.25rem] w-[3.25rem] sm:h-[4.75rem] sm:w-[4.75rem] shrink-0 rounded-2xl object-contain"
                 />
                 <div>
                   <div className="font-semibold text-foreground">{copy.hotelLabel}</div>
@@ -942,13 +993,19 @@ export function BookDemoModal() {
                 {StepContent()}
               </div>
 
-              <div className="mt-auto pt-6 flex justify-center">
+              <div className="mt-auto pt-6 flex flex-col items-center gap-2">
+                {submitError ? (
+                  <p className="text-sm text-destructive text-center max-w-md" role="alert">
+                    {submitError}
+                  </p>
+                ) : null}
                 <div className="flex items-center justify-center gap-3">
                   {step > 0 ? (
                     <button
                       type="button"
                       onClick={goBack}
-                      className="inline-flex items-center gap-2 rounded-lg border border-border bg-background px-7 py-2.5 text-sm font-semibold text-foreground hover:bg-muted/40 transition-colors min-w-[124px] justify-center"
+                      disabled={isSubmitting}
+                      className="inline-flex items-center gap-2 rounded-lg border border-border bg-background px-7 py-2.5 text-sm font-semibold text-foreground hover:bg-muted/40 transition-colors min-w-[124px] justify-center disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <ChevronLeft className="h-4 w-4" />
                       {copy.back}
@@ -970,14 +1027,15 @@ export function BookDemoModal() {
                   ) : (
                     <button
                       type="button"
-                      onClick={handleSubmit}
-                      disabled={!canContinue}
+                      onClick={() => void handleSubmit()}
+                      disabled={!canContinue || isSubmitting}
                       className={cn(
                         "inline-flex items-center gap-2 rounded-lg bg-accent px-8 py-3 text-sm font-semibold text-accent-foreground hover:bg-accent/90 transition-colors focus:outline-none focus:ring-2 focus:ring-ring min-w-[208px] justify-center",
-                        !canContinue && "opacity-50 cursor-not-allowed"
+                        (!canContinue || isSubmitting) && "opacity-50 cursor-not-allowed"
                       )}
                     >
-                      {copy.submit} <ArrowRight className="h-4 w-4" />
+                      {isSubmitting ? copy.submitSending : copy.submit}{" "}
+                      <ArrowRight className="h-4 w-4" />
                     </button>
                   )}
                 </div>
