@@ -8,7 +8,7 @@ const HowItWorks = () => {
   const data = tab === "restaurants" ? t.howItWorks.restaurant : t.howItWorks.hotel;
 
   return (
-    <section id="how-it-works" className="py-24 bg-secondary">
+    <section id="how-it-works" className="py-24 bg-background">
       <div className="container max-w-5xl">
         <div className="text-center mb-6">
           <h2 className="font-serif text-display text-foreground">
@@ -16,21 +16,23 @@ const HowItWorks = () => {
           </h2>
         </div>
 
-        {/* Tab toggle */}
-        <div className="flex justify-center gap-2 mb-12">
-          {(["restaurants", "hotels"] as const).map((key) => (
-            <button
-              key={key}
-              onClick={() => setTab(key)}
-              className={`px-5 py-2 rounded-full text-sm font-medium transition-all ${
-                tab === key
-                  ? "bg-accent text-accent-foreground shadow-md"
-                  : "bg-muted text-muted-foreground hover:bg-muted/80"
-              }`}
-            >
-              {key === "restaurants" ? t.howItWorks.restaurantLabel : t.howItWorks.hotelLabel}
-            </button>
-          ))}
+        {/* Toggle — match Features / Pricing / PainStats segmented control */}
+        <div className="flex justify-center mb-12">
+          <div className="bg-secondary rounded-xl p-1 inline-flex">
+            {(["restaurants", "hotels"] as const).map((key) => (
+              <button
+                key={key}
+                onClick={() => setTab(key)}
+                className={`px-7 py-2.5 rounded-lg text-[15px] font-semibold transition-all duration-250 ${
+                  tab === key
+                    ? "bg-foreground text-primary-foreground"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {key === "restaurants" ? t.howItWorks.restaurantLabel : t.howItWorks.hotelLabel}
+              </button>
+            ))}
+          </div>
         </div>
 
         <AnimatePresence mode="wait">

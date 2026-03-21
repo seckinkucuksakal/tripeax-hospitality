@@ -1,7 +1,8 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { useBookDemoModal } from "@/lib/BookDemoModalContext";
 import { useLanguage } from "@/lib/LanguageContext";
+import { useBookDemoModal } from "@/lib/BookDemoModalContext";
+import tripeaxLogo from "@/assets/tripeax-logo-transparency.png";
 
 const Navbar = () => {
   const { lang, setLang, t } = useLanguage();
@@ -12,16 +13,13 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-xl border-b border-border/50 transition-all duration-300">
-      <div className="container flex h-[72px] items-center justify-between">
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-xl border-b border-border/50 transition-all duration-300 overflow-visible">
+      <div className="container flex h-[84px] items-center justify-between">
         <Link to="/" className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-accent rounded-lg flex items-center justify-center">
-            <span className="text-accent-foreground font-serif font-bold text-base">T</span>
-          </div>
-          <span className="font-serif text-[22px] text-foreground">{" Tripeax"}</span>
+          <img src={tripeaxLogo} alt="Tripeax" className="h-[176px] w-auto" />
         </Link>
 
-        <div className="hidden md:flex items-center gap-8">
+        <div className="hidden md:flex items-center gap-8 ml-7">
           <button onClick={() => scrollTo("features")} className="text-sm text-muted-foreground hover:text-foreground transition-colors tracking-wide">
             {t.nav.features}
           </button>

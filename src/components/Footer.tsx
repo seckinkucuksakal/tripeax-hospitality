@@ -1,5 +1,6 @@
 import { useLanguage } from "@/lib/LanguageContext";
 import { useBookDemoModal } from "@/lib/BookDemoModalContext";
+import tripeaxLogo from "@/assets/tripeax-logo-footer-tranparency.png";
 
 const Footer = () => {
   const { t } = useLanguage();
@@ -39,17 +40,11 @@ const Footer = () => {
 
         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 bg-accent/20 rounded-lg flex items-center justify-center">
-              <span className="text-accent font-serif font-bold text-sm">T</span>
-            </div>
-            <span className="font-serif text-lg text-primary-foreground">Tripeax</span>
-          </div>
-          <div className="flex gap-6">
-            {t.footer.links.map((link) => (
-              <span key={link} className="text-[13px] text-primary-foreground/40 cursor-pointer hover:text-primary-foreground/60 transition-colors">
-                {link}
-              </span>
-            ))}
+            <img
+              src={tripeaxLogo}
+              alt="Tripeax"
+              className="h-[200px] w-auto object-contain flex-shrink-0"
+            />
           </div>
           <span className="text-[13px] text-primary-foreground/30">
             {t.footer.copyright}

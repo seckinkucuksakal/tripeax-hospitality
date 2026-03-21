@@ -1,120 +1,206 @@
-import { Check, X } from "lucide-react";
-import { useBookDemoModal } from "@/lib/BookDemoModalContext";
+import { useState } from "react";
+import { Check } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useLanguage } from "@/lib/LanguageContext";
+import { useBookDemoModal } from "@/lib/BookDemoModalContext";
 
 const PricingSection = () => {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const { openBookDemo } = useBookDemoModal();
+  const [tab, setTab] = useState<"restaurants" | "hotels">("restaurants");
 
-  const plans = [t.pricing.starter, t.pricing.professional, t.pricing.enterprise];
+  // The translation shape can vary (some versions provide `pricing.restaurant/hotel`,
+  // others provide only `pricing.starter/professional/enterprise`).
+  // Fallback to the base `pricing` object to avoid runtime crashes.
+  const pricing: any = t.pricing;
+  const plans =
+    tab === "restaurants" ? pricing.restaurant ?? pricing : pricing.hotel ?? pricing;
+  const starter = plans.starter ?? pricing.starter;
+  const professional = plans.professional ?? pricing.professional;
+  const enterprise = plans.enterprise ?? pricing.enterprise;
+
+  const formatPrice = (plan: any) => {
+    // Newer schema: numeric EUR/TRY
+    if ("priceEur" in plan) {
+      if (lang === "tr" && "priceTry" in plan) {
+        return `₺${plan.priceTry.toLocaleString("tr-TR")}`;
+      }
+      return `€${plan.priceEur}`;
+    }
+
+    // Older schema: string `price` like "€199" or "Custom"
+    if (typeof plan?.price === "string") return plan.price;
+    return null;
+  };
+
+  const scrollToDemo = openBookDemo;
+
+  const restaurantLabel =
+    pricing.restaurantLabel ?? (lang === "tr" ? "Restoranlar" : "Restaurants");
+  const hotelLabel = pricing.hotelLabel ?? (lang === "tr" ? "Oteller" : "Hotels");
+  const perMonth =
+    pricing.perMonth ?? starter?.period ?? (lang === "tr" ? "/ay" : "/mo");
+  const bookDemo =
+    pricing.bookDemo ?? starter?.cta ?? professional?.cta ?? (lang === "tr" ? "Demo Talep Et" : "Book a Demo");
+  const contactSales =
+    pricing.contactSales ??
+    enterprise?.cta ??
+    (lang === "tr" ? "Satışla İletişim" : "Contact Sales");
+  const everythingInPro =
+    pricing.everythingInPro ?? (lang === "tr" ? "Profesyonel paketinde her şey" : "Everything in Professional");
 
   return (
-    <section id="pricing" className="py-24 bg-secondary">
-      <div className="container max-w-[1100px]">
-        <div className="text-center mb-14">
-          <span className="text-[13px] font-semibold tracking-[0.1em] uppercase text-accent">
-            {t.pricing.eyebrow}
-          </span>
-          <h2 className="font-serif text-display text-foreground mt-4">
-            {t.pricing.headline}
-          </h2>
-          <p className="text-base text-muted-foreground mt-2 max-w-lg mx-auto">
-            {t.pricing.subhead}
-          </p>
-        </div>
-
-        {/* Pricing comparison */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-[700px] mx-auto mb-14">
-          <div className="rounded-xl border border-border bg-card p-6 text-center">
-            <div className="flex items-center justify-center gap-2 mb-2">
-              <X className="h-5 w-5 text-coral" />
-              <span className="font-semibold text-foreground">{t.pricing.comparison.traditional.label}</span>
-            </div>
-            <p className="text-sm text-muted-foreground">{t.pricing.comparison.traditional.desc}</p>
-          </div>
-          <div className="rounded-xl border-2 border-accent bg-accent/5 p-6 text-center">
-            <div className="flex items-center justify-center gap-2 mb-2">
-              <Check className="h-5 w-5 text-accent" />
-              <span className="font-semibold text-foreground">{t.pricing.comparison.tripeax.label}</span>
-            </div>
-            <p className="text-sm text-muted-foreground">{t.pricing.comparison.tripeax.desc}</p>
+    <section id="pricing" className="py-24 bg-background">
+      <div className="container max-w-[1200px]">
+        {/* Header row */}
+        <div className="flex flex-col md:flex-row md:items-start md:justify-between mb-14 gap-6">
+          <div>
+            <h2 className="font-serif text-display text-foreground">
+              {t.pricing.headline}
+            </h2>
+            <p className="text-base text-muted-foreground mt-2 max-w-lg">
+              {t.pricing.subhead}
+            </p>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
-          {plans.map((plan, idx) => {
-            const isPro = idx === 1;
-            return (
-              <div
-                key={plan.name}
-                className={`rounded-2xl p-9 flex flex-col relative ${
-                  isPro
-                    ? "bg-foreground border-2 border-accent shadow-2xl shadow-foreground/20"
-                    : "bg-card border border-border"
+        {/* Industry toggle */}
+        <div className="flex justify-center mb-12">
+          <div className="bg-secondary rounded-xl p-1 inline-flex">
+            {(["restaurants", "hotels"] as const).map((v) => (
+              <button
+                key={v}
+                onClick={() => setTab(v)}
+                className={`px-7 py-2.5 rounded-lg text-[15px] font-semibold transition-all duration-250 ${
+                  tab === v
+                    ? "bg-foreground text-primary-foreground"
+                    : "text-muted-foreground hover:text-foreground"
                 }`}
               >
-                {isPro && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-accent text-accent-foreground text-[11px] font-bold px-4 py-1 rounded-md uppercase tracking-wide">
-                    {t.pricing.mostPopular}
-                  </div>
-                )}
+                {v === "restaurants" ? restaurantLabel : hotelLabel}
+              </button>
+            ))}
+          </div>
+        </div>
 
-                <span className="text-[13px] font-semibold uppercase tracking-wide text-accent">
-                  {plan.name}
+        {/* Cards */}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={tab}
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -12 }}
+            transition={{ duration: 0.35 }}
+            className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch"
+          >
+            {/* Starter */}
+            <div className="bg-card rounded-2xl p-8 pt-10 border border-border flex flex-col order-2 md:order-1">
+              <span className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+                {starter?.name}
+              </span>
+              <p className="text-sm text-muted-foreground mt-1 min-h-[40px]">
+                {starter?.subtitle ?? starter?.description}
+              </p>
+
+              <div className="flex items-baseline gap-1 mt-6 mb-6">
+                <span className="font-serif text-[48px] font-bold text-foreground leading-none">
+                  {formatPrice(starter)}
                 </span>
-
-                <div className="flex items-baseline gap-1 mt-3 mb-1">
-                  <span className={`font-serif text-[44px] ${isPro ? "text-primary-foreground" : "text-foreground"}`}>
-                    {plan.price}
-                  </span>
-                  <span className={`text-[15px] ${isPro ? "text-primary-foreground/50" : "text-muted-foreground"}`}>
-                    {plan.period}
-                  </span>
-                </div>
-
-                <p className={`text-sm mb-2 ${isPro ? "text-accent" : "text-accent"}`}>
-                  {plan.successFee}
-                </p>
-                <p className={`text-[13px] leading-relaxed mb-6 ${isPro ? "text-primary-foreground/50" : "text-muted-foreground"}`}>
-                  {plan.description}
-                </p>
-
-                <ul className="space-y-2.5 mb-8 flex-1">
-                  {plan.features.map((f) => (
-                    <li key={f} className="flex items-center gap-2.5 text-sm">
-                      <Check className={`h-4 w-4 shrink-0 ${isPro ? "text-accent" : "text-accent"}`} />
-                      <span className={isPro ? "text-primary-foreground" : "text-foreground"}>
-                        {f}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-
-                <button
-                  onClick={openBookDemo}
-                  className={`w-full py-3.5 rounded-lg text-[15px] font-semibold transition-all duration-200 ${
-                    isPro
-                      ? "bg-accent text-accent-foreground hover:bg-accent/80"
-                      : "border-2 border-foreground text-foreground hover:bg-foreground hover:text-primary-foreground"
-                  }`}
-                >
-                  {plan.cta}
-                </button>
+                <span className="text-muted-foreground text-base">{perMonth}</span>
               </div>
-            );
-          })}
-        </div>
 
-        {/* Fee explainer */}
-        <div className="mt-10 bg-card rounded-2xl p-6 md:px-9 border-2 border-accent/20 flex items-start gap-5">
-          <div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center shrink-0">
-            <Check className="h-5 w-5 text-accent" />
-          </div>
-          <div>
-            <p className="text-sm font-semibold text-foreground mb-1">{t.pricing.feeExplainer.title}</p>
-            <p className="text-[13px] text-muted-foreground leading-relaxed">{t.pricing.feeExplainer.desc}</p>
-          </div>
-        </div>
+              <ul className="space-y-3 mb-8 flex-1">
+                {(starter?.features ?? []).map((f: string) => (
+                  <li key={f} className="flex items-start gap-2.5 text-sm">
+                    <Check className="h-4 w-4 shrink-0 text-accent mt-0.5" />
+                    <span className="text-muted-foreground">{f}</span>
+                  </li>
+                ))}
+              </ul>
+
+              <button
+                onClick={scrollToDemo}
+                className="w-full py-3.5 rounded-lg text-[15px] font-semibold bg-accent text-accent-foreground hover:bg-accent/80 transition-all duration-200"
+              >
+                {bookDemo}
+              </button>
+            </div>
+
+            {/* Professional (highlighted) */}
+            <div className="bg-card rounded-2xl p-8 pt-10 border-2 border-accent relative flex flex-col shadow-[0_0_40px_-8px_hsl(160_84%_39%/0.3)] order-1 md:order-2">
+              {/* Badge */}
+              <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-accent text-accent-foreground text-[11px] font-bold px-4 py-1.5 rounded-full uppercase tracking-wider whitespace-nowrap">
+                {t.pricing.mostPopular}
+              </div>
+
+              <span className="text-sm font-semibold uppercase tracking-wider text-accent">
+                {professional?.name}
+              </span>
+              <p className="text-sm text-muted-foreground mt-1 min-h-[40px]">
+                {professional?.subtitle ?? professional?.description}
+              </p>
+
+              <div className="flex items-baseline gap-1 mt-6 mb-6">
+                <span className="font-serif text-[48px] font-bold text-foreground leading-none">
+                  {formatPrice(professional)}
+                </span>
+                <span className="text-muted-foreground text-base">{perMonth}</span>
+              </div>
+
+              <ul className="space-y-3 mb-8 flex-1">
+                {(professional?.features ?? []).map((f: string) => (
+                  <li key={f} className="flex items-start gap-2.5 text-sm">
+                    <Check className="h-4 w-4 shrink-0 text-accent mt-0.5" />
+                    <span className="text-muted-foreground">{f}</span>
+                  </li>
+                ))}
+              </ul>
+
+              <button
+                onClick={scrollToDemo}
+                className="w-full py-3.5 rounded-lg text-[15px] font-semibold bg-accent text-accent-foreground hover:bg-accent/80 transition-all duration-200"
+              >
+                {bookDemo}
+              </button>
+            </div>
+
+            {/* Enterprise */}
+            <div className="bg-card rounded-2xl p-8 pt-10 border border-border flex flex-col order-3">
+              <span className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+                {enterprise?.name}
+              </span>
+              <p className="text-sm text-muted-foreground mt-1 min-h-[40px]">
+                {enterprise?.subtitle ?? enterprise?.description}
+              </p>
+
+              <div className="flex items-baseline gap-1 mt-6 mb-6">
+                <span className="font-serif text-[48px] font-bold text-foreground leading-none">
+                  Custom
+                </span>
+              </div>
+
+              <p className="text-xs font-semibold text-accent mb-3">
+                {everythingInPro}
+              </p>
+
+              <ul className="space-y-3 mb-8 flex-1">
+                {(enterprise?.features ?? []).map((f: string) => (
+                  <li key={f} className="flex items-start gap-2.5 text-sm">
+                    <Check className="h-4 w-4 shrink-0 text-accent mt-0.5" />
+                    <span className="text-muted-foreground">{f}</span>
+                  </li>
+                ))}
+              </ul>
+
+              <button
+                onClick={scrollToDemo}
+                className="w-full py-3.5 rounded-lg text-[15px] font-semibold border-2 border-border text-foreground hover:bg-secondary transition-all duration-200"
+              >
+                {contactSales}
+              </button>
+            </div>
+          </motion.div>
+        </AnimatePresence>
       </div>
     </section>
   );

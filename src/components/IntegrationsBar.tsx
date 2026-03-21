@@ -4,7 +4,7 @@ const IntegrationsBar = () => {
   const { t } = useLanguage();
 
   return (
-    <section className="py-14 border-y border-border bg-secondary">
+    <section className="py-14 border-y border-border bg-background">
       <div className="container max-w-[1000px] text-center">
         <span className="text-[13px] tracking-[0.12em] uppercase text-accent font-semibold">
           {t.integrations.eyebrow}

@@ -6,7 +6,7 @@ const DifferentiatorSection = () => {
   const { t } = useLanguage();
 
   return (
-    <section className="py-24 bg-secondary">
+    <section className="py-24 bg-background">
       <div className="container max-w-[1000px]">
         <div className="text-center mb-14">
           <span className="text-[13px] font-semibold tracking-[0.1em] uppercase text-accent">
