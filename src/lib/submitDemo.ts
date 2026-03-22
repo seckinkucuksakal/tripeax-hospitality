@@ -51,7 +51,7 @@ export async function submitDemo(data: DemoFormData): Promise<void> {
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
   };
-  const bearer = (import.meta.env.SHEETDB_BEARER_TOKEN as string | undefined)?.trim();
+  const bearer = (import.meta.env.VITE_SHEETDB_BEARER_TOKEN as string | undefined)?.trim();
   if (bearer) {
     headers.Authorization = bearer.toLowerCase().startsWith("bearer ")
       ? bearer
