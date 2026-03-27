@@ -9,6 +9,12 @@ import { OnboardingTopNav } from "@/components/onboarding/OnboardingTopNav";
 
 const STEP = 7;
 
+type CustomFaqItem = {
+  id: string;
+  question: string;
+  answer: string;
+};
+
 type ChainState = {
   profile?: unknown;
   operatingHours?: unknown;
@@ -17,7 +23,7 @@ type ChainState = {
   reservationIntegration?: unknown;
   callerFaqs?: {
     answers?: Record<string, string>;
-    customQuestions?: string[];
+    customQuestions?: Array<string | { question: string; answer?: string; id?: string }>;
   };
   aiVoicePersona?: unknown;
 };
@@ -26,6 +32,24 @@ type QuestionItem = {
   id: string;
   question: string;
 };
+
+function normalizeCustomQuestions(raw: unknown): CustomFaqItem[] {
+  if (!Array.isArray(raw)) return [];
+  return raw.map((entry) => {
+    if (typeof entry === "string") {
+      return { id: crypto.randomUUID(), question: entry, answer: "" };
+    }
+    if (entry && typeof entry === "object") {
+      const o = entry as { id?: string; question?: unknown; answer?: unknown };
+      return {
+        id: typeof o.id === "string" ? o.id : crypto.randomUUID(),
+        question: typeof o.question === "string" ? o.question : "",
+        answer: typeof o.answer === "string" ? o.answer : "",
+      };
+    }
+    return { id: crypto.randomUUID(), question: "", answer: "" };
+  });
+}
 
 export default function RestaurantOnboardingStep7Page() {
   const { t } = useLanguage();
@@ -41,12 +65,17 @@ export default function RestaurantOnboardingStep7Page() {
   const initialFaqs = (location.state as ChainState | null)?.callerFaqs;
   const [answers, setAnswers] = useState<Record<string, string>>(() => initialFaqs?.answers ?? {});
   const [openQuestionId, setOpenQuestionId] = useState<string>(questions[0]?.id ?? "");
-  const [customQuestions, setCustomQuestions] = useState<string[]>(() => initialFaqs?.customQuestions ?? []);
-
-  const answeredCount = useMemo(
-    () => questions.filter((q) => (answers[q.id] ?? "").trim().length > 0).length,
-    [answers, questions],
+  const [customItems, setCustomItems] = useState<CustomFaqItem[]>(() =>
+    normalizeCustomQuestions(initialFaqs?.customQuestions),
   );
+
+  const totalQuestionCount = questions.length + customItems.length;
+
+  const answeredCount = useMemo(() => {
+    const preset = questions.filter((q) => (answers[q.id] ?? "").trim().length > 0).length;
+    const custom = customItems.filter((c) => (c.answer ?? "").trim().length > 0).length;
+    return preset + custom;
+  }, [answers, questions, customItems]);
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -65,14 +94,24 @@ export default function RestaurantOnboardingStep7Page() {
               .map(([k, v]) => [k, v.trim()] as const)
               .filter(([, v]) => v.length > 0),
           ),
-          customQuestions: customQuestions.map((q) => q.trim()).filter(Boolean),
+          customQuestions: customItems
+            .map(({ id, question, answer }) => ({
+              id,
+              question: question.trim(),
+              answer: answer.trim(),
+            }))
+            .filter((x) => x.question.length > 0),
         },
       },
     });
   }
 
   function addCustomQuestion() {
-    setCustomQuestions((prev) => [...prev, ""]);
+    setCustomItems((prev) => [...prev, { id: crypto.randomUUID(), question: "", answer: "" }]);
+  }
+
+  function patchCustomItem(id: string, patch: Partial<Pick<CustomFaqItem, "question" | "answer">>) {
+    setCustomItems((prev) => prev.map((c) => (c.id === id ? { ...c, ...patch } : c)));
   }
 
   return (
@@ -95,7 +134,7 @@ export default function RestaurantOnboardingStep7Page() {
               <span className="inline-flex items-center px-3 py-1 rounded-full bg-accent/10 text-accent text-xs font-bold tracking-wider whitespace-nowrap">
                 {copy.answeredLabel
                   .replace("{answered}", String(answeredCount))
-                  .replace("{total}", String(questions.length))}
+                  .replace("{total}", String(totalQuestionCount))}
               </span>
             </div>
           </div>
@@ -149,17 +188,71 @@ export default function RestaurantOnboardingStep7Page() {
             );
           })}
 
-          {customQuestions.map((question, idx) => (
-            <input
-              key={`custom-${idx}`}
-              value={question}
-              onChange={(e) =>
-                setCustomQuestions((prev) => prev.map((v, i) => (i === idx ? e.target.value : v)))
-              }
-              placeholder={copy.customQuestionPlaceholder}
-              className="w-full border border-border/50 bg-card rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-accent focus:outline-none"
-            />
-          ))}
+          {customItems.map((item) => {
+            const rowId = `custom-${item.id}`;
+            const isOpen = openQuestionId === rowId;
+            const hasAnswer = (item.answer ?? "").trim().length > 0;
+            const titlePreview = item.question.trim() || copy.customQuestionPlaceholder;
+            return (
+              <div
+                key={item.id}
+                className={`rounded-xl shadow-sm overflow-hidden transition-all ${
+                  isOpen ? "border-2 border-accent bg-card" : "border border-border/40 bg-card hover:border-border/70"
+                }`}
+              >
+                <button
+                  type="button"
+                  onClick={() => setOpenQuestionId(isOpen ? "" : rowId)}
+                  className="w-full flex items-center p-4 text-left"
+                >
+                  <div className="mr-4 shrink-0 text-muted-foreground">
+                    {hasAnswer ? <CircleCheckBig className="h-5 w-5 text-accent" /> : <Circle className="h-5 w-5" />}
+                  </div>
+                  <h3 className="font-bold text-sm flex-1 line-clamp-2">{titlePreview}</h3>
+                  <span className="ml-2 shrink-0 text-muted-foreground">
+                    {isOpen ? <ChevronUp className="h-5 w-5 text-accent" /> : <ChevronDown className="h-5 w-5" />}
+                  </span>
+                </button>
+                {isOpen ? (
+                  <div className="px-4 pb-4 bg-card space-y-3">
+                    <div>
+                      <label className="block text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1.5">
+                        {copy.customQuestionLabel}
+                      </label>
+                      <textarea
+                        value={item.question}
+                        onChange={(e) => patchCustomItem(item.id, { question: e.target.value })}
+                        placeholder={copy.customQuestionPlaceholder}
+                        rows={2}
+                        className="w-full bg-muted/40 border border-border/50 focus:border-accent focus:ring-0 rounded-xl text-sm p-3 resize-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1.5">
+                        {copy.customAnswerLabel}
+                      </label>
+                      <textarea
+                        value={item.answer}
+                        onChange={(e) => patchCustomItem(item.id, { answer: e.target.value })}
+                        placeholder={copy.answerPlaceholder}
+                        rows={4}
+                        className="w-full bg-muted/40 border border-accent/30 focus:border-accent focus:ring-0 rounded-xl text-sm p-4 resize-none"
+                      />
+                    </div>
+                    <div className="flex justify-end pt-1">
+                      <button
+                        type="button"
+                        onClick={() => setOpenQuestionId("")}
+                        className="text-accent font-bold text-xs uppercase tracking-widest px-4 py-2 hover:bg-accent/10 rounded-lg transition-colors"
+                      >
+                        {copy.saveAnswer}
+                      </button>
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+            );
+          })}
 
           <button
             type="button"

@@ -23,6 +23,7 @@ type ReservationSettings = {
   seatingAreas: SeatingArea[];
   averageDiningTime: string;
   depositRequired: boolean;
+  depositAmount?: string;
   cancellationPolicy: string;
   waitlistEnabled: boolean;
   askSpecialOccasions: boolean;
@@ -47,6 +48,7 @@ function defaultSettings(): ReservationSettings {
     ],
     averageDiningTime: "90",
     depositRequired: false,
+    depositAmount: "",
     cancellationPolicy: "",
     waitlistEnabled: true,
     askSpecialOccasions: true,
@@ -61,12 +63,12 @@ export default function RestaurantOnboardingStep5Page() {
 
   const initialSettings = (location.state as ChainState | null)?.reservationSettings ?? defaultSettings();
 
-  const [acceptReservations, setAcceptReservations] = useState(initialSettings.acceptReservations);
   const [slotInterval, setSlotInterval] = useState<"15" | "30" | "60">(initialSettings.slotInterval);
   const [maxDirectPartySize, setMaxDirectPartySize] = useState(String(initialSettings.maxDirectPartySize));
   const [seatingAreas, setSeatingAreas] = useState<SeatingArea[]>(initialSettings.seatingAreas);
   const [averageDiningTime, setAverageDiningTime] = useState(initialSettings.averageDiningTime);
   const [depositRequired, setDepositRequired] = useState(initialSettings.depositRequired);
+  const [depositAmount, setDepositAmount] = useState(() => initialSettings.depositAmount ?? "");
   const [cancellationPolicy, setCancellationPolicy] = useState(initialSettings.cancellationPolicy);
   const [waitlistEnabled, setWaitlistEnabled] = useState(initialSettings.waitlistEnabled);
   const [askSpecialOccasions, setAskSpecialOccasions] = useState(initialSettings.askSpecialOccasions);
@@ -93,7 +95,7 @@ export default function RestaurantOnboardingStep5Page() {
         menu: prev?.menu,
         reservationIntegration: prev?.reservationIntegration,
         reservationSettings: {
-          acceptReservations,
+          acceptReservations: true,
           slotInterval,
           maxDirectPartySize: Math.max(1, Number(maxDirectPartySize) || 1),
           seatingAreas: seatingAreas.map((area) => ({
@@ -103,6 +105,7 @@ export default function RestaurantOnboardingStep5Page() {
           })),
           averageDiningTime,
           depositRequired,
+          depositAmount: depositRequired ? depositAmount.trim() : "",
           cancellationPolicy: cancellationPolicy.trim(),
           waitlistEnabled,
           askSpecialOccasions,
@@ -129,14 +132,6 @@ export default function RestaurantOnboardingStep5Page() {
         </section>
 
         <form id="restaurant-reservation-settings-form" className="space-y-6" onSubmit={handleSubmit}>
-          <div className="flex items-center justify-between rounded-xl bg-card ring-1 ring-border/30 p-5">
-            <div>
-              <h3 className="font-semibold text-foreground">{copy.acceptReservationsTitle}</h3>
-              <p className="text-sm text-muted-foreground">{copy.acceptReservationsDesc}</p>
-            </div>
-            <Switch checked={acceptReservations} onCheckedChange={setAcceptReservations} className="data-[state=checked]:bg-accent" />
-          </div>
-
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="rounded-xl bg-card ring-1 ring-border/30 p-5">
               <label className="text-xs font-bold tracking-widest text-muted-foreground uppercase">{copy.slotIntervalLabel}</label>
@@ -236,12 +231,31 @@ export default function RestaurantOnboardingStep5Page() {
           </div>
 
           <div className="space-y-4">
-            <div className="flex items-center justify-between rounded-xl bg-card ring-1 ring-border/30 p-5">
-              <div>
-                <h3 className="font-semibold text-foreground">{copy.depositTitle}</h3>
-                <p className="text-sm text-muted-foreground">{copy.depositDesc}</p>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between rounded-xl bg-card ring-1 ring-border/30 p-5">
+                <div>
+                  <h3 className="font-semibold text-foreground">{copy.depositTitle}</h3>
+                  <p className="text-sm text-muted-foreground">{copy.depositDesc}</p>
+                </div>
+                <Switch checked={depositRequired} onCheckedChange={setDepositRequired} className="data-[state=checked]:bg-accent" />
               </div>
-              <Switch checked={depositRequired} onCheckedChange={setDepositRequired} className="data-[state=checked]:bg-accent" />
+
+              {depositRequired ? (
+                <div className="rounded-xl bg-card ring-1 ring-border/30 p-5 space-y-3">
+                  <label className="text-xs font-bold tracking-widest text-muted-foreground uppercase block">
+                    {copy.depositAmountLabel}
+                  </label>
+                  <input
+                    type="text"
+                    value={depositAmount}
+                    onChange={(e) => setDepositAmount(e.target.value)}
+                    placeholder={copy.depositAmountPlaceholder}
+                    className="w-full bg-background border border-border/50 rounded-lg py-2.5 px-3 text-sm focus:ring-2 focus:ring-accent focus:outline-none"
+                    autoComplete="off"
+                  />
+                  <p className="text-xs text-muted-foreground leading-relaxed">{copy.depositPaymentNote}</p>
+                </div>
+              ) : null}
             </div>
 
             <div className="rounded-xl bg-card ring-1 ring-border/30 p-5">

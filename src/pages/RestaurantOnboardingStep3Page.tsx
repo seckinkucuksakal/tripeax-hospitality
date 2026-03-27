@@ -19,6 +19,11 @@ type DaySchedule = {
   open: string;
   close: string;
   split: boolean;
+  breakfastEnabled: boolean;
+  breakfastOpen: string;
+  breakfastClose: string;
+  lunchEnabled: boolean;
+  dinnerEnabled: boolean;
   dinnerOpen: string;
   dinnerClose: string;
 };
@@ -29,15 +34,39 @@ function defaultDay(enabled: boolean): DaySchedule {
     open: "11:00",
     close: "22:00",
     split: false,
+    breakfastEnabled: true,
+    breakfastOpen: "07:00",
+    breakfastClose: "11:00",
+    lunchEnabled: true,
+    dinnerEnabled: true,
     dinnerOpen: "18:00",
     dinnerClose: "23:00",
+  };
+}
+
+function normalizeDaySchedule(raw: Partial<DaySchedule> | undefined): DaySchedule {
+  if (!raw) return defaultDay(true);
+  const en = raw.enabled ?? true;
+  const base = defaultDay(en);
+  return {
+    enabled: en,
+    open: raw.open ?? base.open,
+    close: raw.close ?? base.close,
+    split: raw.split ?? false,
+    breakfastEnabled: raw.breakfastEnabled ?? true,
+    breakfastOpen: raw.breakfastOpen ?? base.breakfastOpen,
+    breakfastClose: raw.breakfastClose ?? base.breakfastClose,
+    lunchEnabled: raw.lunchEnabled ?? true,
+    dinnerEnabled: raw.dinnerEnabled ?? true,
+    dinnerOpen: raw.dinnerOpen ?? base.dinnerOpen,
+    dinnerClose: raw.dinnerClose ?? base.dinnerClose,
   };
 }
 
 const KITCHEN_KEYS = ["same", "m15", "m30", "m45", "h1"] as const;
 type KitchenKey = (typeof KITCHEN_KEYS)[number];
 
-const RESV_KEYS = ["h1", "h1_5", "h2", "same_close"] as const;
+const RESV_KEYS = ["h0_5", "h1", "h1_5", "h2", "h3", "same_close"] as const;
 type ResvKey = (typeof RESV_KEYS)[number];
 
 type OperatingHoursPayload = {
@@ -74,7 +103,13 @@ export default function RestaurantOnboardingStep3Page() {
 
   const [schedule, setSchedule] = useState<Record<DayKey, DaySchedule>>(() => {
     const p = hoursFromState(location.state);
-    return p?.schedule ?? defaultSchedule();
+    if (p?.schedule) {
+      return Object.fromEntries(DAY_KEYS.map((k) => [k, normalizeDaySchedule(p.schedule[k])])) as Record<
+        DayKey,
+        DaySchedule
+      >;
+    }
+    return defaultSchedule();
   });
 
   const [kitchenLastOrder, setKitchenLastOrder] = useState<KitchenKey>(() => {
@@ -121,9 +156,11 @@ export default function RestaurantOnboardingStep3Page() {
   ];
 
   const resvOptions: { key: ResvKey; label: string }[] = [
+    { key: "h0_5", label: copy.resvH0_5Before },
     { key: "h1", label: copy.resvH1Before },
     { key: "h1_5", label: copy.resvH1_5Before },
     { key: "h2", label: copy.resvH2Before },
+    { key: "h3", label: copy.resvH3Before },
     { key: "same_close", label: copy.resvSameClose },
   ];
 
@@ -165,60 +202,16 @@ export default function RestaurantOnboardingStep3Page() {
 
                   {sch.enabled ? (
                     <div className="space-y-4">
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                          <span className="text-[10px] uppercase font-bold text-muted-foreground mb-1 block">
-                            {sch.split ? copy.lunchStart : copy.openLabel}
-                          </span>
-                          <select
-                            className={selectClass}
-                            value={sch.open}
-                            onChange={(e) => patchDay(key, { open: e.target.value })}
-                          >
-                            {timeOptions.map((opt) => (
-                              <option key={opt} value={opt}>
-                                {opt}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-                        <div>
-                          <span className="text-[10px] uppercase font-bold text-muted-foreground mb-1 block">
-                            {sch.split ? copy.lunchEnd : copy.closeLabel}
-                          </span>
-                          <select
-                            className={selectClass}
-                            value={sch.close}
-                            onChange={(e) => patchDay(key, { close: e.target.value })}
-                          >
-                            {timeOptions.map((opt) => (
-                              <option key={opt} value={opt}>
-                                {opt}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center justify-between gap-4">
-                        <span className="text-[10px] uppercase font-bold text-muted-foreground">{copy.splitLabel}</span>
-                        <Switch
-                          checked={sch.split}
-                          onCheckedChange={(v) => patchDay(key, { split: v })}
-                          className="data-[state=checked]:bg-accent shrink-0 scale-90"
-                        />
-                      </div>
-
-                      {sch.split ? (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-dashed border-border/40">
+                      {!sch.split ? (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <div>
                             <span className="text-[10px] uppercase font-bold text-muted-foreground mb-1 block">
-                              {copy.dinnerStart}
+                              {copy.openLabel}
                             </span>
                             <select
                               className={selectClass}
-                              value={sch.dinnerOpen}
-                              onChange={(e) => patchDay(key, { dinnerOpen: e.target.value })}
+                              value={sch.open}
+                              onChange={(e) => patchDay(key, { open: e.target.value })}
                             >
                               {timeOptions.map((opt) => (
                                 <option key={opt} value={opt}>
@@ -229,12 +222,12 @@ export default function RestaurantOnboardingStep3Page() {
                           </div>
                           <div>
                             <span className="text-[10px] uppercase font-bold text-muted-foreground mb-1 block">
-                              {copy.dinnerEnd}
+                              {copy.closeLabel}
                             </span>
                             <select
                               className={selectClass}
-                              value={sch.dinnerClose}
-                              onChange={(e) => patchDay(key, { dinnerClose: e.target.value })}
+                              value={sch.close}
+                              onChange={(e) => patchDay(key, { close: e.target.value })}
                             >
                               {timeOptions.map((opt) => (
                                 <option key={opt} value={opt}>
@@ -242,6 +235,162 @@ export default function RestaurantOnboardingStep3Page() {
                                 </option>
                               ))}
                             </select>
+                          </div>
+                        </div>
+                      ) : null}
+
+                      <div className="flex items-center justify-between gap-4">
+                        <span className="text-[10px] uppercase font-bold text-muted-foreground">{copy.splitLabel}</span>
+                        <Switch
+                          checked={sch.split}
+                          onCheckedChange={(v) => patchDay(key, { split: v })}
+                          className="data-[state=checked]:bg-accent shrink-0"
+                        />
+                      </div>
+
+                      {sch.split ? (
+                        <div className="space-y-5 pt-4 border-t border-dashed border-border/40">
+                          <div className="space-y-3">
+                            <div className="flex items-center justify-between gap-4">
+                              <span className="text-[10px] uppercase font-bold text-muted-foreground">
+                                {copy.mealBreakfast}
+                              </span>
+                              <Switch
+                                checked={sch.breakfastEnabled}
+                                onCheckedChange={(v) => patchDay(key, { breakfastEnabled: v })}
+                                className="data-[state=checked]:bg-accent shrink-0"
+                              />
+                            </div>
+                            {sch.breakfastEnabled ? (
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                  <span className="text-[10px] uppercase font-bold text-muted-foreground mb-1 block">
+                                    {copy.breakfastStart}
+                                  </span>
+                                  <select
+                                    className={selectClass}
+                                    value={sch.breakfastOpen}
+                                    onChange={(e) => patchDay(key, { breakfastOpen: e.target.value })}
+                                  >
+                                    {timeOptions.map((opt) => (
+                                      <option key={opt} value={opt}>
+                                        {opt}
+                                      </option>
+                                    ))}
+                                  </select>
+                                </div>
+                                <div>
+                                  <span className="text-[10px] uppercase font-bold text-muted-foreground mb-1 block">
+                                    {copy.breakfastEnd}
+                                  </span>
+                                  <select
+                                    className={selectClass}
+                                    value={sch.breakfastClose}
+                                    onChange={(e) => patchDay(key, { breakfastClose: e.target.value })}
+                                  >
+                                    {timeOptions.map((opt) => (
+                                      <option key={opt} value={opt}>
+                                        {opt}
+                                      </option>
+                                    ))}
+                                  </select>
+                                </div>
+                              </div>
+                            ) : null}
+                          </div>
+
+                          <div className="space-y-3">
+                            <div className="flex items-center justify-between gap-4">
+                              <span className="text-[10px] uppercase font-bold text-muted-foreground">{copy.mealLunch}</span>
+                              <Switch
+                                checked={sch.lunchEnabled}
+                                onCheckedChange={(v) => patchDay(key, { lunchEnabled: v })}
+                                className="data-[state=checked]:bg-accent shrink-0"
+                              />
+                            </div>
+                            {sch.lunchEnabled ? (
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                  <span className="text-[10px] uppercase font-bold text-muted-foreground mb-1 block">
+                                    {copy.lunchStart}
+                                  </span>
+                                  <select
+                                    className={selectClass}
+                                    value={sch.open}
+                                    onChange={(e) => patchDay(key, { open: e.target.value })}
+                                  >
+                                    {timeOptions.map((opt) => (
+                                      <option key={opt} value={opt}>
+                                        {opt}
+                                      </option>
+                                    ))}
+                                  </select>
+                                </div>
+                                <div>
+                                  <span className="text-[10px] uppercase font-bold text-muted-foreground mb-1 block">
+                                    {copy.lunchEnd}
+                                  </span>
+                                  <select
+                                    className={selectClass}
+                                    value={sch.close}
+                                    onChange={(e) => patchDay(key, { close: e.target.value })}
+                                  >
+                                    {timeOptions.map((opt) => (
+                                      <option key={opt} value={opt}>
+                                        {opt}
+                                      </option>
+                                    ))}
+                                  </select>
+                                </div>
+                              </div>
+                            ) : null}
+                          </div>
+
+                          <div className="space-y-3">
+                            <div className="flex items-center justify-between gap-4">
+                              <span className="text-[10px] uppercase font-bold text-muted-foreground">{copy.mealDinner}</span>
+                              <Switch
+                                checked={sch.dinnerEnabled}
+                                onCheckedChange={(v) => patchDay(key, { dinnerEnabled: v })}
+                                className="data-[state=checked]:bg-accent shrink-0"
+                              />
+                            </div>
+                            {sch.dinnerEnabled ? (
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                  <span className="text-[10px] uppercase font-bold text-muted-foreground mb-1 block">
+                                    {copy.dinnerStart}
+                                  </span>
+                                  <select
+                                    className={selectClass}
+                                    value={sch.dinnerOpen}
+                                    onChange={(e) => patchDay(key, { dinnerOpen: e.target.value })}
+                                  >
+                                    {timeOptions.map((opt) => (
+                                      <option key={opt} value={opt}>
+                                        {opt}
+                                      </option>
+                                    ))}
+                                  </select>
+                                </div>
+                                <div>
+                                  <span className="text-[10px] uppercase font-bold text-muted-foreground mb-1 block">
+                                    {copy.dinnerEnd}
+                                  </span>
+                                  <select
+                                    className={selectClass}
+                                    value={sch.dinnerClose}
+                                    onChange={(e) => patchDay(key, { dinnerClose: e.target.value })}
+                                  >
+                                    {timeOptions.map((opt) => (
+                                      <option key={opt} value={opt}>
+                                        {opt}
+                                      </option>
+                                    ))}
+                                  </select>
+                                </div>
+                              </div>
+                            ) : null}
                           </div>
                         </div>
                       ) : null}
