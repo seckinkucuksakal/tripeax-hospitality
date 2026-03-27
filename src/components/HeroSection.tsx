@@ -3,10 +3,12 @@ import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/lib/LanguageContext";
 import { useBookDemoModal } from "@/lib/BookDemoModalContext";
+import { useNavigate } from "react-router-dom";
 
 const HeroSection = () => {
   const { t } = useLanguage();
   const { openBookDemo } = useBookDemoModal();
+  const navigate = useNavigate();
 
   return (
     <section className="relative min-h-[100dvh] flex flex-col bg-background overflow-hidden pt-[84px]">
@@ -55,6 +57,13 @@ const HeroSection = () => {
             transition={{ duration: 0.5, delay: 0.15, ease: [0.16, 1, 0.3, 1] as const }}
             className="flex flex-col sm:flex-row items-center justify-center gap-4"
           >
+            <Button
+              size="lg"
+                onClick={() => navigate("/auth?mode=register")}
+              className="ring-1 ring-accent/35 ring-offset-background ring-offset-2 bg-accent/12 text-accent hover:bg-accent/16 gap-2 px-10 py-7 text-lg font-semibold shadow-sm hover:-translate-y-0.5 transition-all"
+            >
+              {t.hero.cta2} <ArrowRight className="h-5 w-5" />
+            </Button>
             <Button
               size="lg"
               onClick={openBookDemo}

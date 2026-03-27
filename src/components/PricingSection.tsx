@@ -3,29 +3,68 @@ import { Check } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLanguage } from "@/lib/LanguageContext";
 import { useBookDemoModal } from "@/lib/BookDemoModalContext";
+import { useNavigate } from "react-router-dom";
+
+type Plan = {
+  name?: string;
+  subtitle?: string;
+  description?: string;
+  period?: string;
+  cta?: string;
+  features?: string[];
+  priceEur?: number;
+  priceTry?: number;
+  price?: string;
+};
+
+type PricingTranslation = {
+  headline: string;
+  subhead: string;
+  mostPopular: string;
+  restaurantLabel?: string;
+  hotelLabel?: string;
+  perMonth?: string;
+  everythingInPro?: string;
+  bookDemo?: string;
+  getStarted?: string;
+  contactSales?: string;
+  restaurant?: {
+    starter?: Plan;
+    professional?: Plan;
+    enterprise?: Plan;
+  };
+  hotel?: {
+    starter?: Plan;
+    professional?: Plan;
+    enterprise?: Plan;
+  };
+  starter?: Plan;
+  professional?: Plan;
+  enterprise?: Plan;
+};
 
 const PricingSection = () => {
   const { t, lang } = useLanguage();
   const { openBookDemo } = useBookDemoModal();
+  const navigate = useNavigate();
   const [tab, setTab] = useState<"restaurants" | "hotels">("restaurants");
 
   // The translation shape can vary (some versions provide `pricing.restaurant/hotel`,
   // others provide only `pricing.starter/professional/enterprise`).
   // Fallback to the base `pricing` object to avoid runtime crashes.
-  const pricing: any = t.pricing;
-  const plans =
-    tab === "restaurants" ? pricing.restaurant ?? pricing : pricing.hotel ?? pricing;
-  const starter = plans.starter ?? pricing.starter;
-  const professional = plans.professional ?? pricing.professional;
-  const enterprise = plans.enterprise ?? pricing.enterprise;
+  const pricing = t.pricing as unknown as PricingTranslation;
+  const plans = (tab === "restaurants" ? pricing.restaurant : pricing.hotel) ?? pricing;
+  const starter = plans?.starter ?? pricing.starter;
+  const professional = plans?.professional ?? pricing.professional;
+  const enterprise = plans?.enterprise ?? pricing.enterprise;
 
-  const formatPrice = (plan: any) => {
+  const formatPrice = (plan: Plan | undefined) => {
     // Newer schema: numeric EUR/TRY
-    if ("priceEur" in plan) {
-      if (lang === "tr" && "priceTry" in plan) {
+    if (plan && "priceEur" in plan) {
+      if (lang === "tr" && "priceTry" in plan && typeof plan.priceTry === "number") {
         return `₺${plan.priceTry.toLocaleString("tr-TR")}`;
       }
-      return `€${plan.priceEur}`;
+      if (typeof plan.priceEur === "number") return `€${plan.priceEur}`;
     }
 
     // Older schema: string `price` like "€199" or "Custom"
@@ -40,8 +79,12 @@ const PricingSection = () => {
   const hotelLabel = pricing.hotelLabel ?? (lang === "tr" ? "Oteller" : "Hotels");
   const perMonth =
     pricing.perMonth ?? starter?.period ?? (lang === "tr" ? "/ay" : "/mo");
-  const bookDemo =
-    pricing.bookDemo ?? starter?.cta ?? professional?.cta ?? (lang === "tr" ? "Demo Talep Et" : "Book a Demo");
+  const getStarted =
+    pricing.getStarted ??
+    pricing.bookDemo ??
+    starter?.cta ??
+    professional?.cta ??
+    (lang === "tr" ? "Hemen Başlayın" : "Get started");
   const contactSales =
     pricing.contactSales ??
     enterprise?.cta ??
@@ -119,10 +162,10 @@ const PricingSection = () => {
               </ul>
 
               <button
-                onClick={scrollToDemo}
+                onClick={() => navigate("/auth?mode=register")}
                 className="w-full py-3.5 rounded-lg text-[15px] font-semibold bg-accent text-accent-foreground hover:bg-accent/80 transition-all duration-200"
               >
-                {bookDemo}
+                {getStarted}
               </button>
             </div>
 
@@ -157,10 +200,10 @@ const PricingSection = () => {
               </ul>
 
               <button
-                onClick={scrollToDemo}
+                onClick={() => navigate("/auth?mode=register")}
                 className="w-full py-3.5 rounded-lg text-[15px] font-semibold bg-accent text-accent-foreground hover:bg-accent/80 transition-all duration-200"
               >
-                {bookDemo}
+                {getStarted}
               </button>
             </div>
 
