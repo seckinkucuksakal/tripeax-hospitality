@@ -6,6 +6,7 @@ import { Coffee, Lightbulb, Mic, PhoneForwarded, Smile, Verified } from "lucide-
 import { useLanguage } from "@/lib/LanguageContext";
 import { OnboardingBottomNav } from "@/components/onboarding/OnboardingBottomNav";
 import { OnboardingTopNav } from "@/components/onboarding/OnboardingTopNav";
+import type { HotelPmsIntegrationPayload } from "@/pages/HotelOnboardingStep7Page";
 
 const STEP = 8;
 
@@ -17,21 +18,26 @@ type VoicePersona = {
   transferMessage?: string;
 };
 
+type CommonQuestionsPayload = {
+  cells: Record<string, { answer: string; proactive: boolean }>;
+  customQuestions: Array<{ id: string; tab: string; question: string; answer: string }>;
+};
+
 type ChainState = {
   profile?: unknown;
-  operatingHours?: unknown;
-  menu?: unknown;
-  reservationSettings?: unknown;
-  reservationIntegration?: unknown;
-  callerFaqs?: unknown;
+  hotelHours?: unknown;
+  roomInventory?: unknown;
+  bookingFinalization?: unknown;
+  commonQuestions?: CommonQuestionsPayload;
+  hotelPmsIntegration?: HotelPmsIntegrationPayload;
   aiVoicePersona?: VoicePersona;
 };
 
-export default function RestaurantOnboardingStep8Page() {
+export default function HotelOnboardingStep8Page() {
   const { t } = useLanguage();
   const navigate = useNavigate();
   const location = useLocation();
-  const copy = useMemo(() => t.onboardingRestaurantVoicePersona, [t.onboardingRestaurantVoicePersona]);
+  const copy = useMemo(() => t.onboardingHotelVoicePersona, [t.onboardingHotelVoicePersona]);
 
   const initial = (location.state as ChainState | null)?.aiVoicePersona;
   const [tone, setTone] = useState<ToneKey>(initial?.tone ?? "warm");
@@ -43,14 +49,14 @@ export default function RestaurantOnboardingStep8Page() {
     const prev = (location.state ?? null) as ChainState | null;
     navigate("/initializing", {
       state: {
-        businessType: "restaurant" as const,
+        businessType: "hotel" as const,
         onboardingStep: STEP,
         profile: prev?.profile,
-        operatingHours: prev?.operatingHours,
-        menu: prev?.menu,
-        reservationSettings: prev?.reservationSettings,
-        reservationIntegration: prev?.reservationIntegration,
-        callerFaqs: prev?.callerFaqs,
+        hotelHours: prev?.hotelHours,
+        roomInventory: prev?.roomInventory,
+        bookingFinalization: prev?.bookingFinalization,
+        commonQuestions: prev?.commonQuestions,
+        hotelPmsIntegration: prev?.hotelPmsIntegration,
         aiVoicePersona: {
           tone,
           customGreeting: customGreeting.trim() || undefined,
@@ -75,7 +81,7 @@ export default function RestaurantOnboardingStep8Page() {
           <p className="text-lg text-muted-foreground leading-relaxed">{copy.subhead}</p>
         </section>
 
-        <form id="restaurant-voice-form" className="space-y-8" onSubmit={handleSubmit}>
+        <form id="hotel-voice-form" className="space-y-8" onSubmit={handleSubmit}>
           <section>
             <h2 className="text-sm font-semibold text-accent uppercase tracking-widest mb-4">{copy.toneTitle}</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -124,12 +130,12 @@ export default function RestaurantOnboardingStep8Page() {
           <section className="p-6 bg-card rounded-xl">
             <div className="flex items-center gap-2 mb-4">
               <Mic className="h-5 w-5 text-accent" />
-              <label className="text-sm font-semibold" htmlFor="custom-greeting">
+              <label className="text-sm font-semibold" htmlFor="hotel-custom-greeting">
                 {copy.customGreetingLabel}
               </label>
             </div>
             <textarea
-              id="custom-greeting"
+              id="hotel-custom-greeting"
               value={customGreeting}
               onChange={(e) => setCustomGreeting(e.target.value)}
               rows={3}
@@ -153,12 +159,12 @@ export default function RestaurantOnboardingStep8Page() {
           <section className="p-6 bg-card rounded-xl">
             <div className="flex items-center gap-2 mb-4">
               <PhoneForwarded className="h-5 w-5 text-accent" />
-              <label className="text-sm font-semibold" htmlFor="transfer-message">
+              <label className="text-sm font-semibold" htmlFor="hotel-transfer-message">
                 {copy.transferLabel}
               </label>
             </div>
             <textarea
-              id="transfer-message"
+              id="hotel-transfer-message"
               value={transferMessage}
               onChange={(e) => setTransferMessage(e.target.value)}
               rows={2}
@@ -173,8 +179,8 @@ export default function RestaurantOnboardingStep8Page() {
       <OnboardingBottomNav
         backLabel={copy.back}
         continueLabel={copy.continue}
-        onBack={() => navigate("/onboarding/restaurant/step-7", { state: location.state })}
-        formId="restaurant-voice-form"
+        onBack={() => navigate("/onboarding/hotel/step-7", { state: location.state })}
+        formId="hotel-voice-form"
       />
     </motion.div>
   );

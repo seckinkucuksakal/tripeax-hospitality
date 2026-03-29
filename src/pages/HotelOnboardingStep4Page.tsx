@@ -2,7 +2,7 @@ import type { FormEvent } from "react";
 import { useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Lightbulb, Plus, Trash2 } from "lucide-react";
+import { ChevronDown, ChevronUp, Lightbulb, Plus, Trash2 } from "lucide-react";
 import { useLanguage } from "@/lib/LanguageContext";
 import { OnboardingBottomNav } from "@/components/onboarding/OnboardingBottomNav";
 import { OnboardingTopNav } from "@/components/onboarding/OnboardingTopNav";
@@ -163,8 +163,8 @@ export default function HotelOnboardingStep4Page() {
               const expanded = expandedRoomId === room.id;
               return (
                 <div key={room.id} className="bg-card rounded-xl border border-border/30 overflow-hidden shadow-sm">
-                  <div className="flex items-center justify-between p-5 bg-muted/30">
-                    <button type="button" className="text-left" onClick={() => setExpandedRoomId(expanded ? "" : room.id)}>
+                  <div className="flex items-center justify-between gap-3 p-5 bg-muted/30">
+                    <button type="button" className="text-left flex-1 min-w-0" onClick={() => setExpandedRoomId(expanded ? "" : room.id)}>
                       <h3 className="font-bold">{room.name || copy.newRoomDefaultName}</h3>
                       <div className="flex gap-3 mt-1">
                         <span className="text-xs text-muted-foreground">
@@ -177,69 +177,219 @@ export default function HotelOnboardingStep4Page() {
                         </span>
                       </div>
                     </button>
-                    <button type="button" onClick={() => removeRoomType(room.id)} className="p-2 text-destructive hover:bg-destructive/10 rounded-lg">
-                      <Trash2 className="h-4 w-4" />
-                    </button>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <button type="button" onClick={() => removeRoomType(room.id)} className="p-2 text-destructive hover:bg-destructive/10 rounded-lg">
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setExpandedRoomId(expanded ? "" : room.id)}
+                        className="p-2 text-accent hover:bg-accent/10 rounded-lg"
+                        aria-expanded={expanded}
+                      >
+                        {expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                      </button>
+                    </div>
                   </div>
 
                   {expanded ? (
-                    <div className="p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div className="p-6 grid grid-cols-1 lg:grid-cols-3 gap-8">
                       <div className="space-y-4">
-                        <h4 className="font-bold text-xs uppercase tracking-wider text-muted-foreground">{copy.basicsTitle}</h4>
-                        <input value={room.name} onChange={(e) => patchRoom(room.id, { name: e.target.value })} placeholder={copy.roomNameLabel} className="w-full bg-background border border-border/40 rounded-lg px-3 py-2.5 text-sm" />
-                        <div className="grid grid-cols-2 gap-3">
-                          <input value={room.count} onChange={(e) => patchRoom(room.id, { count: e.target.value })} placeholder={copy.countLabel} type="number" min={0} className="w-full bg-background border border-border/40 rounded-lg px-3 py-2.5 text-sm" />
-                          <input value={room.size} onChange={(e) => patchRoom(room.id, { size: e.target.value })} placeholder={copy.sizeLabel} type="number" min={0} className="w-full bg-background border border-border/40 rounded-lg px-3 py-2.5 text-sm" />
+                        <h4 className="text-sm font-bold text-foreground">{copy.basicsTitle}</h4>
+                        <div>
+                          <label htmlFor={`${room.id}-name`} className="block text-xs font-semibold text-muted-foreground mb-1.5">
+                            {copy.roomNameLabel}
+                          </label>
+                          <input
+                            id={`${room.id}-name`}
+                            value={room.name}
+                            onChange={(e) => patchRoom(room.id, { name: e.target.value })}
+                            className="w-full bg-background border border-border/40 rounded-lg px-3 py-2.5 text-sm"
+                          />
                         </div>
-                        <select value={room.bedType} onChange={(e) => patchRoom(room.id, { bedType: e.target.value })} className="w-full bg-background border border-border/40 rounded-lg px-3 py-2.5 text-sm">
-                          <option value="king">{copy.bedKing}</option>
-                          <option value="queen">{copy.bedQueen}</option>
-                          <option value="twin">{copy.bedTwin}</option>
-                          <option value="double">{copy.bedDouble}</option>
-                          <option value="king_twin">{copy.bedKingTwin}</option>
-                        </select>
-                        <select value={room.view} onChange={(e) => patchRoom(room.id, { view: e.target.value })} className="w-full bg-background border border-border/40 rounded-lg px-3 py-2.5 text-sm">
-                          <option value="sea">{copy.viewSea}</option>
-                          <option value="city">{copy.viewCity}</option>
-                          <option value="garden">{copy.viewGarden}</option>
-                          <option value="pool">{copy.viewPool}</option>
-                          <option value="mountain">{copy.viewMountain}</option>
-                        </select>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label htmlFor={`${room.id}-count`} className="block text-xs font-semibold text-muted-foreground mb-1.5">
+                              {copy.countLabel}
+                            </label>
+                            <input
+                              id={`${room.id}-count`}
+                              value={room.count}
+                              onChange={(e) => patchRoom(room.id, { count: e.target.value })}
+                              type="number"
+                              min={0}
+                              className="w-full bg-background border border-border/40 rounded-lg px-3 py-2.5 text-sm"
+                            />
+                          </div>
+                          <div>
+                            <label htmlFor={`${room.id}-size`} className="block text-xs font-semibold text-muted-foreground mb-1.5">
+                              {copy.sizeLabel}
+                            </label>
+                            <input
+                              id={`${room.id}-size`}
+                              value={room.size}
+                              onChange={(e) => patchRoom(room.id, { size: e.target.value })}
+                              type="number"
+                              min={0}
+                              className="w-full bg-background border border-border/40 rounded-lg px-3 py-2.5 text-sm"
+                            />
+                          </div>
+                        </div>
+                        <div>
+                          <label htmlFor={`${room.id}-bed`} className="block text-xs font-semibold text-muted-foreground mb-1.5">
+                            {copy.bedTypeLabel}
+                          </label>
+                          <select
+                            id={`${room.id}-bed`}
+                            value={room.bedType}
+                            onChange={(e) => patchRoom(room.id, { bedType: e.target.value })}
+                            className="w-full bg-background border border-border/40 rounded-lg px-3 py-2.5 text-sm"
+                          >
+                            <option value="king">{copy.bedKing}</option>
+                            <option value="queen">{copy.bedQueen}</option>
+                            <option value="twin">{copy.bedTwin}</option>
+                            <option value="double">{copy.bedDouble}</option>
+                            <option value="king_twin">{copy.bedKingTwin}</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label htmlFor={`${room.id}-view`} className="block text-xs font-semibold text-muted-foreground mb-1.5">
+                            {copy.viewLabel}
+                          </label>
+                          <select
+                            id={`${room.id}-view`}
+                            value={room.view}
+                            onChange={(e) => patchRoom(room.id, { view: e.target.value })}
+                            className="w-full bg-background border border-border/40 rounded-lg px-3 py-2.5 text-sm"
+                          >
+                            <option value="sea">{copy.viewSea}</option>
+                            <option value="city">{copy.viewCity}</option>
+                            <option value="garden">{copy.viewGarden}</option>
+                            <option value="pool">{copy.viewPool}</option>
+                            <option value="mountain">{copy.viewMountain}</option>
+                          </select>
+                        </div>
                       </div>
 
                       <div className="space-y-4">
-                        <h4 className="font-bold text-xs uppercase tracking-wider text-muted-foreground">{copy.capacityPricingTitle}</h4>
+                        <h4 className="text-sm font-bold text-foreground">{copy.capacityPricingTitle}</h4>
                         <div className="grid grid-cols-2 gap-3">
-                          <input value={room.maxAdults} onChange={(e) => patchRoom(room.id, { maxAdults: e.target.value })} placeholder={copy.maxAdultsLabel} type="number" min={1} className="w-full bg-background border border-border/40 rounded-lg px-3 py-2.5 text-sm" />
-                          <input value={room.maxChildren} onChange={(e) => patchRoom(room.id, { maxChildren: e.target.value })} placeholder={copy.maxChildrenLabel} type="number" min={0} className="w-full bg-background border border-border/40 rounded-lg px-3 py-2.5 text-sm" />
+                          <div>
+                            <label htmlFor={`${room.id}-adults`} className="block text-xs font-semibold text-muted-foreground mb-1.5">
+                              {copy.maxAdultsLabel}
+                            </label>
+                            <input
+                              id={`${room.id}-adults`}
+                              value={room.maxAdults}
+                              onChange={(e) => patchRoom(room.id, { maxAdults: e.target.value })}
+                              type="number"
+                              min={1}
+                              className="w-full bg-background border border-border/40 rounded-lg px-3 py-2.5 text-sm"
+                            />
+                          </div>
+                          <div>
+                            <label htmlFor={`${room.id}-children`} className="block text-xs font-semibold text-muted-foreground mb-1.5">
+                              {copy.maxChildrenLabel}
+                            </label>
+                            <input
+                              id={`${room.id}-children`}
+                              value={room.maxChildren}
+                              onChange={(e) => patchRoom(room.id, { maxChildren: e.target.value })}
+                              type="number"
+                              min={0}
+                              className="w-full bg-background border border-border/40 rounded-lg px-3 py-2.5 text-sm"
+                            />
+                          </div>
                         </div>
-                        <input value={room.startingRate} onChange={(e) => patchRoom(room.id, { startingRate: e.target.value })} placeholder={copy.startingRateLabel} type="number" min={0} className="w-full bg-background border border-border/40 rounded-lg px-3 py-2.5 text-sm" />
-                        <textarea value={room.salesHook} onChange={(e) => patchRoom(room.id, { salesHook: e.target.value })} placeholder={copy.salesHookPlaceholder} rows={4} className="w-full bg-background border border-border/40 rounded-lg px-3 py-2.5 text-sm resize-none" />
+                        <div>
+                          <label htmlFor={`${room.id}-rate`} className="block text-xs font-semibold text-muted-foreground mb-1.5">
+                            {copy.startingRateLabel} ({copy.currencyShort[currency]})
+                          </label>
+                          <div className="relative">
+                            <input
+                              id={`${room.id}-rate`}
+                              value={room.startingRate}
+                              onChange={(e) => patchRoom(room.id, { startingRate: e.target.value })}
+                              type="number"
+                              min={0}
+                              className="w-full bg-background border border-border/40 rounded-lg pl-3 pr-12 py-2.5 text-sm"
+                            />
+                            <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-muted-foreground">
+                              {copy.currencyShort[currency]}
+                            </span>
+                          </div>
+                        </div>
+                        <div>
+                          <label htmlFor={`${room.id}-hook`} className="block text-xs font-semibold text-muted-foreground mb-1.5">
+                            {copy.salesHookLabel}
+                          </label>
+                          <textarea
+                            id={`${room.id}-hook`}
+                            value={room.salesHook}
+                            onChange={(e) => patchRoom(room.id, { salesHook: e.target.value })}
+                            placeholder={copy.salesHookPlaceholder}
+                            rows={4}
+                            className="w-full bg-background border border-border/40 rounded-lg px-3 py-2.5 text-sm resize-none"
+                          />
+                        </div>
                       </div>
 
                       <div className="space-y-4">
-                        <h4 className="font-bold text-xs uppercase tracking-wider text-muted-foreground">{copy.detailsTitle}</h4>
-                        <div className="grid grid-cols-2 gap-y-2 text-sm">
-                          <label className="flex items-center gap-2"><input type="checkbox" checked={room.breakfast} onChange={(e) => patchRoom(room.id, { breakfast: e.target.checked })} />{copy.inclusionBreakfast}</label>
-                          <label className="flex items-center gap-2"><input type="checkbox" checked={room.wifi} onChange={(e) => patchRoom(room.id, { wifi: e.target.checked })} />{copy.inclusionWifi}</label>
-                          <label className="flex items-center gap-2"><input type="checkbox" checked={room.pool} onChange={(e) => patchRoom(room.id, { pool: e.target.checked })} />{copy.inclusionPool}</label>
-                          <label className="flex items-center gap-2"><input type="checkbox" checked={room.parking} onChange={(e) => patchRoom(room.id, { parking: e.target.checked })} />{copy.inclusionParking}</label>
+                        <h4 className="text-sm font-bold text-foreground">{copy.detailsTitle}</h4>
+                        <div>
+                          <p className="text-xs font-semibold text-muted-foreground mb-2">{copy.inclusionsTitle}</p>
+                          <div className="grid grid-cols-2 gap-x-3 gap-y-2 text-sm">
+                            <label className="flex items-center gap-2 cursor-pointer">
+                              <input type="checkbox" checked={room.breakfast} onChange={(e) => patchRoom(room.id, { breakfast: e.target.checked })} />
+                              {copy.inclusionBreakfast}
+                            </label>
+                            <label className="flex items-center gap-2 cursor-pointer">
+                              <input type="checkbox" checked={room.wifi} onChange={(e) => patchRoom(room.id, { wifi: e.target.checked })} />
+                              {copy.inclusionWifi}
+                            </label>
+                            <label className="flex items-center gap-2 cursor-pointer">
+                              <input type="checkbox" checked={room.pool} onChange={(e) => patchRoom(room.id, { pool: e.target.checked })} />
+                              {copy.inclusionPool}
+                            </label>
+                            <label className="flex items-center gap-2 cursor-pointer">
+                              <input type="checkbox" checked={room.parking} onChange={(e) => patchRoom(room.id, { parking: e.target.checked })} />
+                              {copy.inclusionParking}
+                            </label>
+                          </div>
                         </div>
-                        <div className="space-y-3 pt-2">
-                          <div className="flex items-center justify-between">
+                        <div className="space-y-3 pt-1">
+                          <div className="flex items-center justify-between gap-3">
                             <span className="text-xs font-semibold text-muted-foreground">{copy.extraBedLabel}</span>
-                            <Switch checked={room.extraBedAvailable} onCheckedChange={(v) => patchRoom(room.id, { extraBedAvailable: v })} className="data-[state=checked]:bg-accent" />
+                            <Switch checked={room.extraBedAvailable} onCheckedChange={(v) => patchRoom(room.id, { extraBedAvailable: v })} className="data-[state=checked]:bg-accent shrink-0" />
                           </div>
                           {room.extraBedAvailable ? (
-                            <input value={room.extraBedRate} onChange={(e) => patchRoom(room.id, { extraBedRate: e.target.value })} placeholder={copy.extraBedRatePlaceholder} type="number" min={0} className="w-full bg-background border border-border/40 rounded-lg px-3 py-2 text-sm" />
+                            <div>
+                              <label htmlFor={`${room.id}-extra-rate`} className="sr-only">
+                                {copy.extraBedRatePlaceholder}
+                              </label>
+                              <div className="relative">
+                                <input
+                                  id={`${room.id}-extra-rate`}
+                                  value={room.extraBedRate}
+                                  onChange={(e) => patchRoom(room.id, { extraBedRate: e.target.value })}
+                                  placeholder={copy.extraBedRatePlaceholder}
+                                  type="number"
+                                  min={0}
+                                  className="w-full bg-background border border-border/40 rounded-lg pl-3 pr-[7.5rem] py-2.5 text-sm"
+                                />
+                                <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground whitespace-nowrap">
+                                  {copy.extraBedPerNight.replace("{currency}", copy.currencyShort[currency])}
+                                </span>
+                              </div>
+                            </div>
                           ) : null}
-                          <div className="flex items-center justify-between">
+                          <div className="flex items-center justify-between gap-3">
                             <span className="text-xs font-semibold text-muted-foreground">{copy.accessibleLabel}</span>
-                            <Switch checked={room.accessibleRoom} onCheckedChange={(v) => patchRoom(room.id, { accessibleRoom: v })} className="data-[state=checked]:bg-accent" />
+                            <Switch checked={room.accessibleRoom} onCheckedChange={(v) => patchRoom(room.id, { accessibleRoom: v })} className="data-[state=checked]:bg-accent shrink-0" />
                           </div>
-                          <div className="flex items-center justify-between">
+                          <div className="flex items-center justify-between gap-3">
                             <span className="text-xs font-semibold text-muted-foreground">{copy.interconnectingLabel}</span>
-                            <Switch checked={room.interconnecting} onCheckedChange={(v) => patchRoom(room.id, { interconnecting: v })} className="data-[state=checked]:bg-accent" />
+                            <Switch checked={room.interconnecting} onCheckedChange={(v) => patchRoom(room.id, { interconnecting: v })} className="data-[state=checked]:bg-accent shrink-0" />
                           </div>
                         </div>
                       </div>

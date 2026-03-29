@@ -16,6 +16,7 @@ export default {
       fontFamily: {
         serif: ["DM Serif Display", "Georgia", "serif"],
         sans: ["DM Sans", "system-ui", "sans-serif"],
+        dashboard: ['"Plus Jakarta Sans"', "system-ui", "sans-serif"],
       },
       colors: {
         border: "hsl(var(--border))",
@@ -68,6 +69,21 @@ export default {
           "accent-foreground": "hsl(var(--sidebar-accent-foreground))",
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
+        },
+        /** /home editorial dashboard (Plus Jakarta + Material palette) */
+        dash: {
+          surface: "#f9f9ff",
+          ink: "#141b2b",
+          primary: "#006c49",
+          "primary-container": "#10b981",
+          secondary: "#0058be",
+          tertiary: "#a93530",
+          "tertiary-container": "#ff7a70",
+          error: "#ba1a1a",
+          "surface-container": "#e9edff",
+          "surface-container-low": "#f1f3ff",
+          "surface-container-lowest": "#ffffff",
+          outline: "#6c7a71",
         },
       },
       borderRadius: {

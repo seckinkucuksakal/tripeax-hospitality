@@ -6,6 +6,7 @@ import { Check, Copy, Mail } from "lucide-react";
 import { useLanguage } from "@/lib/LanguageContext";
 import { OnboardingBottomNav } from "@/components/onboarding/OnboardingBottomNav";
 import { OnboardingTopNav } from "@/components/onboarding/OnboardingTopNav";
+import { SystemSelectIndicator } from "@/components/onboarding/SystemSelectIndicator";
 
 const STEP = 6;
 
@@ -32,16 +33,6 @@ type ChainState = {
   reservationIntegration?: ReservationIntegration;
   callerFaqs?: unknown;
 };
-
-function SystemSelectIndicator({ selected }: { selected: boolean }) {
-  return selected ? (
-    <span className="w-6 h-6 rounded-full bg-accent text-accent-foreground flex items-center justify-center shrink-0 mt-0.5" aria-hidden>
-      <Check className="h-4 w-4" />
-    </span>
-  ) : (
-    <span className="w-6 h-6 rounded-full border-2 border-border/55 bg-background shrink-0 mt-0.5" aria-hidden />
-  );
-}
 
 export default function RestaurantOnboardingStep6Page() {
   const { t } = useLanguage();
@@ -101,6 +92,8 @@ export default function RestaurantOnboardingStep6Page() {
 
   const cardSelected = (key: SystemKey) =>
     system === key ? "border-accent ring-accent/30 bg-accent/5" : "border-border/30";
+
+  const otherActive = system === "other" || otherSystemNotes.trim().length > 0;
 
   return (
     <motion.div
@@ -234,14 +227,16 @@ export default function RestaurantOnboardingStep6Page() {
               </div>
             </label>
 
-            <label className={`${cardBase} ${cardSelected("other")} md:col-span-3`}>
+            <label
+              className={`${cardBase} ${otherActive ? "border-accent ring-accent/30 bg-accent/5" : "border-border/30"} md:col-span-3`}
+            >
               <input type="radio" name="res-system" className="sr-only" checked={system === "other"} onChange={() => setSystem("other")} />
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <h3 className="font-semibold text-lg">{copy.otherTitle}</h3>
                   <p className="text-sm text-muted-foreground mt-1">{copy.otherDesc}</p>
                 </div>
-                <SystemSelectIndicator selected={system === "other"} />
+                <SystemSelectIndicator selected={otherActive} />
               </div>
               <textarea
                 value={otherSystemNotes}

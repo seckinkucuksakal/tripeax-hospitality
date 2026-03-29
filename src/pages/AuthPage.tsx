@@ -1,7 +1,8 @@
-import type { FormEvent } from "react";
+import type { FormEvent, MouseEvent } from "react";
 import { useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useLanguage } from "@/lib/LanguageContext";
+import { DEMO_PAYMENT_COMPLETE_KEY } from "@/lib/demo-payment";
 
 type Mode = "register" | "login";
 
@@ -76,6 +77,33 @@ export default function AuthPage() {
     setMode(nextMode);
   }
 
+  /** Dev only: double-click the Create account button to skip validation and go to onboarding. */
+  function handleRegisterDevBypass(e: MouseEvent<HTMLButtonElement>) {
+    if (!import.meta.env.DEV || mode !== "register") return;
+    e.preventDefault();
+    e.stopPropagation();
+    setError(null);
+    const email = registerForm.email.trim() || "dev-bypass@local.local";
+    const users = readUsers();
+    users[email] = {
+      email,
+      fullName: registerForm.fullName.trim() || email.split("@")[0],
+      phone: registerForm.phone.trim() || undefined,
+      whatsapp: registerForm.sameNumber
+        ? registerForm.phone.trim() || undefined
+        : registerForm.whatsapp.trim() || undefined,
+      createdAt: Date.now(),
+    };
+    writeUsers(users);
+    setSession(email);
+    try {
+      localStorage.removeItem(DEMO_PAYMENT_COMPLETE_KEY);
+    } catch {
+      /* ignore */
+    }
+    navigate("/payment");
+  }
+
   async function handleRegister(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
@@ -108,9 +136,14 @@ export default function AuthPage() {
       };
       writeUsers(users);
       setSession(email);
+      try {
+        localStorage.removeItem(DEMO_PAYMENT_COMPLETE_KEY);
+      } catch {
+        /* ignore */
+      }
 
-      // Register successful -> continue with onboarding step 1.
-      navigate("/business-selection");
+      // Register successful -> dummy payment, then onboarding.
+      navigate("/payment");
     } catch {
       setError(copy.submitErrorGeneric);
     } finally {
@@ -147,7 +180,7 @@ export default function AuthPage() {
       }
 
       setSession(email);
-      navigate("/book-demo/calendar");
+      navigate("/home");
     } catch {
       setError(copy.submitErrorGeneric);
     } finally {
@@ -388,6 +421,7 @@ export default function AuthPage() {
               className="w-full bg-accent hover:bg-accent/90 text-accent-foreground font-bold py-4 rounded-lg transition-all duration-200 mt-4 shadow-lg shadow-accent/20 active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed"
               type="submit"
               disabled={submitting}
+              onDoubleClick={mode === "register" && import.meta.env.DEV ? handleRegisterDevBypass : undefined}
             >
               {submitting ? copy.successRedirectText : primaryCta}
             </button>

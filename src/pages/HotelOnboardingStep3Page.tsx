@@ -19,8 +19,13 @@ type HotelHoursPayload = {
   earlyCheckInAvailable: boolean;
   earlyCheckInFrom: string;
   earlyCheckInCharge: "free" | "percent_25" | "fixed";
+  earlyCheckInFixedAmount: string;
   lateCheckOutAvailable: boolean;
+  lateCheckOutFrom: string;
+  lateCheckOutUntil: string;
   addRestaurantHours: boolean;
+  restaurantOpen: string;
+  restaurantClose: string;
 };
 
 type ChainState = {
@@ -39,8 +44,13 @@ function defaultHours(): HotelHoursPayload {
     earlyCheckInAvailable: false,
     earlyCheckInFrom: "10:00",
     earlyCheckInCharge: "free",
+    earlyCheckInFixedAmount: "",
     lateCheckOutAvailable: false,
+    lateCheckOutFrom: "12:00",
+    lateCheckOutUntil: "15:00",
     addRestaurantHours: false,
+    restaurantOpen: "12:00",
+    restaurantClose: "22:00",
   };
 }
 
@@ -50,7 +60,10 @@ export default function HotelOnboardingStep3Page() {
   const location = useLocation();
   const copy = useMemo(() => t.onboardingHotelHours, [t.onboardingHotelHours]);
 
-  const initial = (location.state as ChainState | null)?.hotelHours ?? defaultHours();
+  const initial: HotelHoursPayload = {
+    ...defaultHours(),
+    ...((location.state as ChainState | null)?.hotelHours as Partial<HotelHoursPayload> | undefined),
+  };
 
   const [checkInTime, setCheckInTime] = useState(initial.checkInTime);
   const [checkOutTime, setCheckOutTime] = useState(initial.checkOutTime);
@@ -60,8 +73,13 @@ export default function HotelOnboardingStep3Page() {
   const [earlyCheckInAvailable, setEarlyCheckInAvailable] = useState(initial.earlyCheckInAvailable);
   const [earlyCheckInFrom, setEarlyCheckInFrom] = useState(initial.earlyCheckInFrom);
   const [earlyCheckInCharge, setEarlyCheckInCharge] = useState<"free" | "percent_25" | "fixed">(initial.earlyCheckInCharge);
+  const [earlyCheckInFixedAmount, setEarlyCheckInFixedAmount] = useState(initial.earlyCheckInFixedAmount);
   const [lateCheckOutAvailable, setLateCheckOutAvailable] = useState(initial.lateCheckOutAvailable);
+  const [lateCheckOutFrom, setLateCheckOutFrom] = useState(initial.lateCheckOutFrom);
+  const [lateCheckOutUntil, setLateCheckOutUntil] = useState(initial.lateCheckOutUntil);
   const [addRestaurantHours, setAddRestaurantHours] = useState(initial.addRestaurantHours);
+  const [restaurantOpen, setRestaurantOpen] = useState(initial.restaurantOpen);
+  const [restaurantClose, setRestaurantClose] = useState(initial.restaurantClose);
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -79,8 +97,13 @@ export default function HotelOnboardingStep3Page() {
           earlyCheckInAvailable,
           earlyCheckInFrom,
           earlyCheckInCharge,
+          earlyCheckInFixedAmount,
           lateCheckOutAvailable,
+          lateCheckOutFrom,
+          lateCheckOutUntil,
           addRestaurantHours,
+          restaurantOpen,
+          restaurantClose,
         } satisfies HotelHoursPayload,
       },
     });
@@ -104,7 +127,7 @@ export default function HotelOnboardingStep3Page() {
         <form id="hotel-hours-form" className="space-y-6" onSubmit={handleSubmit}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="bg-card p-5 rounded-xl ring-1 ring-border/30">
-              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">{copy.checkInLabel}</label>
+              <label className="block text-xs font-semibold text-muted-foreground mb-2">{copy.checkInLabel}</label>
               <input
                 type="time"
                 value={checkInTime}
@@ -113,7 +136,7 @@ export default function HotelOnboardingStep3Page() {
               />
             </div>
             <div className="bg-card p-5 rounded-xl ring-1 ring-border/30">
-              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">{copy.checkOutLabel}</label>
+              <label className="block text-xs font-semibold text-muted-foreground mb-2">{copy.checkOutLabel}</label>
               <input
                 type="time"
                 value={checkOutTime}
@@ -142,7 +165,7 @@ export default function HotelOnboardingStep3Page() {
                 <p className="text-xs text-muted-foreground mb-3">{copy.frontDeskAvailabilityHint}</p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{copy.openingTimeLabel}</label>
+                    <label className="text-xs font-semibold text-muted-foreground">{copy.openingTimeLabel}</label>
                     <input
                       type="time"
                       value={frontDeskOpen}
@@ -151,7 +174,7 @@ export default function HotelOnboardingStep3Page() {
                     />
                   </div>
                   <div>
-                    <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{copy.closingTimeLabel}</label>
+                    <label className="text-xs font-semibold text-muted-foreground">{copy.closingTimeLabel}</label>
                     <input
                       type="time"
                       value={frontDeskClose}
@@ -181,43 +204,82 @@ export default function HotelOnboardingStep3Page() {
                 />
               </div>
               {earlyCheckInAvailable ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-xs font-semibold text-muted-foreground">{copy.earlyFromLabel}</label>
+                      <input
+                        type="time"
+                        value={earlyCheckInFrom}
+                        onChange={(e) => setEarlyCheckInFrom(e.target.value)}
+                        className="mt-2 w-full bg-background rounded-lg border border-border/40 px-3 py-2.5 text-sm font-medium"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold text-muted-foreground">{copy.extraChargeLabel}</label>
+                      <select
+                        value={earlyCheckInCharge}
+                        onChange={(e) => setEarlyCheckInCharge(e.target.value as "free" | "percent_25" | "fixed")}
+                        className="mt-2 w-full bg-background rounded-lg border border-border/40 px-3 py-2.5 text-sm font-medium"
+                      >
+                        <option value="free">{copy.chargeFree}</option>
+                        <option value="percent_25">{copy.chargePercent}</option>
+                        <option value="fixed">{copy.chargeFixed}</option>
+                      </select>
+                    </div>
+                  </div>
+                  {earlyCheckInCharge === "fixed" ? (
+                    <div className="mt-4">
+                      <label className="text-xs font-semibold text-muted-foreground">{copy.earlyCheckInFixedAmountLabel}</label>
+                      <input
+                        type="text"
+                        inputMode="decimal"
+                        className="mt-2 w-full bg-background rounded-lg border border-border/40 px-3 py-2.5 text-sm font-medium placeholder:text-muted-foreground/50"
+                        placeholder={copy.earlyCheckInFixedAmountPlaceholder}
+                        value={earlyCheckInFixedAmount}
+                        onChange={(e) => setEarlyCheckInFixedAmount(e.target.value)}
+                      />
+                    </div>
+                  ) : null}
+                </>
+              ) : null}
+            </div>
+
+            <div className="p-5">
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <span className="w-9 h-9 rounded-full bg-accent/10 text-accent flex items-center justify-center">
+                    <MoonStar className="h-4 w-4" />
+                  </span>
                   <div>
-                    <label className="text-xs font-semibold text-muted-foreground">{copy.earlyFromLabel}</label>
+                    <h3 className="font-semibold">{copy.lateCheckOutTitle}</h3>
+                    <p className="text-xs text-muted-foreground">{copy.lateCheckOutDesc}</p>
+                  </div>
+                </div>
+                <Switch checked={lateCheckOutAvailable} onCheckedChange={setLateCheckOutAvailable} className="data-[state=checked]:bg-accent" />
+              </div>
+              {lateCheckOutAvailable ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                  <div>
+                    <label className="text-xs font-semibold text-muted-foreground">{copy.lateCheckOutFromLabel}</label>
                     <input
                       type="time"
-                      value={earlyCheckInFrom}
-                      onChange={(e) => setEarlyCheckInFrom(e.target.value)}
+                      value={lateCheckOutFrom}
+                      onChange={(e) => setLateCheckOutFrom(e.target.value)}
                       className="mt-2 w-full bg-background rounded-lg border border-border/40 px-3 py-2.5 text-sm font-medium"
                     />
                   </div>
                   <div>
-                    <label className="text-xs font-semibold text-muted-foreground">{copy.extraChargeLabel}</label>
-                    <select
-                      value={earlyCheckInCharge}
-                      onChange={(e) => setEarlyCheckInCharge(e.target.value as "free" | "percent_25" | "fixed")}
+                    <label className="text-xs font-semibold text-muted-foreground">{copy.lateCheckOutUntilLabel}</label>
+                    <input
+                      type="time"
+                      value={lateCheckOutUntil}
+                      onChange={(e) => setLateCheckOutUntil(e.target.value)}
                       className="mt-2 w-full bg-background rounded-lg border border-border/40 px-3 py-2.5 text-sm font-medium"
-                    >
-                      <option value="free">{copy.chargeFree}</option>
-                      <option value="percent_25">{copy.chargePercent}</option>
-                      <option value="fixed">{copy.chargeFixed}</option>
-                    </select>
+                    />
                   </div>
                 </div>
               ) : null}
-            </div>
-
-            <div className="p-5 flex items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <span className="w-9 h-9 rounded-full bg-accent/10 text-accent flex items-center justify-center">
-                  <MoonStar className="h-4 w-4" />
-                </span>
-                <div>
-                  <h3 className="font-semibold">{copy.lateCheckOutTitle}</h3>
-                  <p className="text-xs text-muted-foreground">{copy.lateCheckOutDesc}</p>
-                </div>
-              </div>
-              <Switch checked={lateCheckOutAvailable} onCheckedChange={setLateCheckOutAvailable} className="data-[state=checked]:bg-accent" />
             </div>
           </div>
 
@@ -231,6 +293,33 @@ export default function HotelOnboardingStep3Page() {
             <Utensils className="h-4 w-4" />
             <span className="font-semibold">{copy.addRestaurantHours}</span>
           </button>
+
+          {addRestaurantHours ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="bg-card p-5 rounded-xl ring-1 ring-border/30">
+                <label className="block text-xs font-semibold text-muted-foreground mb-2">
+                  {copy.restaurantOpenLabel}
+                </label>
+                <input
+                  type="time"
+                  value={restaurantOpen}
+                  onChange={(e) => setRestaurantOpen(e.target.value)}
+                  className="w-full bg-background rounded-lg border border-border/40 px-4 py-3 font-semibold"
+                />
+              </div>
+              <div className="bg-card p-5 rounded-xl ring-1 ring-border/30">
+                <label className="block text-xs font-semibold text-muted-foreground mb-2">
+                  {copy.restaurantCloseLabel}
+                </label>
+                <input
+                  type="time"
+                  value={restaurantClose}
+                  onChange={(e) => setRestaurantClose(e.target.value)}
+                  className="w-full bg-background rounded-lg border border-border/40 px-4 py-3 font-semibold"
+                />
+              </div>
+            </div>
+          ) : null}
 
           <div className="flex gap-3 p-4 rounded-xl bg-card ring-1 ring-border/30 overflow-hidden relative">
             <div className="absolute left-0 top-0 bottom-0 w-1 bg-accent" />

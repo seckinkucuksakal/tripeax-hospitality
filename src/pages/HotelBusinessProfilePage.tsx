@@ -30,7 +30,8 @@ export default function HotelBusinessProfilePage() {
   const [langFrench, setLangFrench] = useState(false);
   const [langRussian, setLangRussian] = useState(false);
   const [langArabic, setLangArabic] = useState(false);
-  const [langOther, setLangOther] = useState(false);
+  const [otherLang, setOtherLang] = useState(false);
+  const [otherLangText, setOtherLangText] = useState("");
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -44,7 +45,7 @@ export default function HotelBusinessProfilePage() {
           description,
           chain,
           chainName,
-          languages: { langTurkish, langEnglish, langGerman, langFrench, langRussian, langArabic, langOther },
+          languages: { langTurkish, langEnglish, langGerman, langFrench, langRussian, langArabic, otherLang, otherLangText },
         },
       },
     });
@@ -234,15 +235,25 @@ export default function HotelBusinessProfilePage() {
                   />
                   <span className="text-sm text-foreground group-hover:text-accent transition-colors">{copy.langArabic}</span>
                 </label>
-                <label className="flex items-center gap-3 cursor-pointer group">
-                  <input
-                    type="checkbox"
-                    className="w-4 h-4 rounded border-border text-accent focus:ring-accent"
-                    checked={langOther}
-                    onChange={(e) => setLangOther(e.target.checked)}
-                  />
-                  <span className="text-sm text-foreground group-hover:text-accent transition-colors">{copy.langOther}</span>
-                </label>
+                <div className="col-span-2 md:col-span-3">
+                  <label className="flex items-center gap-3 cursor-pointer group mb-2">
+                    <input
+                      type="checkbox"
+                      className="w-4 h-4 rounded border-border text-accent focus:ring-accent"
+                      checked={otherLang}
+                      onChange={(e) => setOtherLang(e.target.checked)}
+                    />
+                    <span className="text-sm text-muted-foreground italic group-hover:text-accent">{copy.otherLanguage}</span>
+                  </label>
+                  {otherLang ? (
+                    <input
+                      className="w-full mt-2 bg-muted/40 border-0 ring-1 ring-border/40 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-accent focus:outline-none placeholder:text-muted-foreground/50"
+                      placeholder={copy.otherLanguagePlaceholder}
+                      value={otherLangText}
+                      onChange={(e) => setOtherLangText(e.target.value)}
+                    />
+                  ) : null}
+                </div>
               </div>
             </div>
 

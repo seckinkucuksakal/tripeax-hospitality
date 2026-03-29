@@ -1,5 +1,5 @@
 /** Total steps in the onboarding flow (progress bar + step label). */
-export const ONBOARDING_TOTAL_STEPS = 9;
+export const ONBOARDING_TOTAL_STEPS = 8;
 
 export function onboardingProgressPercent(step: number): number {
   if (step < 1) return 0;
