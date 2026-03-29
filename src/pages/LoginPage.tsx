@@ -3,7 +3,6 @@ import { useMemo, useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useLanguage } from "@/lib/LanguageContext";
 import { useAuth } from "@/lib/AuthContext";
-import { supabase } from "@/lib/supabase";
 
 export default function LoginPage() {
   const { t, lang, setLang } = useLanguage();
@@ -61,17 +60,7 @@ export default function LoginPage() {
         return;
       }
 
-      const { error: resetError } = await supabase.auth.resetPasswordForEmail(
-        email.trim(),
-        { redirectTo: `${window.location.origin}/auth` },
-      );
-
-      if (resetError) {
-        setError(resetError.message);
-        return;
-      }
-
-      setInfo(copy.forgotPasswordSent);
+      setInfo(copy.forgotPasswordLocalHint);
     } catch {
       setError(copy.submitErrorGeneric);
     } finally {

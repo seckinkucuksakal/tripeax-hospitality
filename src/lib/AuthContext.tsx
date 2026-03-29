@@ -6,12 +6,21 @@ import {
   useCallback,
   type ReactNode,
 } from 'react'
-import type { Session, User, AuthError } from '@supabase/supabase-js'
-import { supabase } from './supabase'
+import type { AuthError, LocalSession, LocalUser } from './local-auth-types'
+import {
+  clearDemoSession,
+  DEMO_PASSWORD,
+  getLocalSessionFromStorage,
+  readDemoUsers,
+  setPendingSignupOtp,
+  subscribeDemoSession,
+  writeDemoSession,
+  writeDemoUsers,
+} from './demo-auth-storage'
 
 interface AuthState {
-  user: User | null
-  session: Session | null
+  user: LocalUser | null
+  session: LocalSession | null
   loading: boolean
 }
 
@@ -31,38 +40,67 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   })
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setState({ user: session?.user ?? null, session, loading: false })
-    })
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setState({ user: session?.user ?? null, session, loading: false })
-    })
-
-    return () => subscription.unsubscribe()
+    function sync() {
+      const session = getLocalSessionFromStorage()
+      setState({
+        user: session?.user ?? null,
+        session,
+        loading: false,
+      })
+    }
+    sync()
+    return subscribeDemoSession(sync)
   }, [])
 
-  const signUp = useCallback(
-    async (email: string, password: string, fullName?: string) => {
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: fullName ? { data: { full_name: fullName } } : undefined,
-      })
-      return { error }
-    },
-    [],
-  )
+  const signUp = useCallback(async (email: string, password: string, fullName?: string) => {
+    const normalized = email.trim()
+    if (!normalized) {
+      return { error: { message: 'Email is required', name: 'AuthError' } satisfies AuthError }
+    }
+    if (password !== DEMO_PASSWORD) {
+      return {
+        error: { message: 'For demo, password must be 123.', name: 'AuthError' } satisfies AuthError,
+      }
+    }
+    const users = readDemoUsers()
+    if (users[normalized]) {
+      return { error: { message: 'User already registered', name: 'AuthError' } satisfies AuthError }
+    }
+    users[normalized] = {
+      email: normalized,
+      fullName: fullName?.trim() || normalized.split('@')[0] || normalized,
+      createdAt: Date.now(),
+    }
+    writeDemoUsers(users)
+    setPendingSignupOtp(normalized)
+    return { error: null }
+  }, [])
 
   const signIn = useCallback(async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
-    return { error }
+    const normalized = email.trim()
+    if (!normalized) {
+      return { error: { message: 'Email is required', name: 'AuthError' } satisfies AuthError }
+    }
+    if (password !== DEMO_PASSWORD) {
+      return {
+        error: { message: 'For demo, password must be 123.', name: 'AuthError' } satisfies AuthError,
+      }
+    }
+    const users = readDemoUsers()
+    if (!users[normalized]) {
+      users[normalized] = {
+        email: normalized,
+        fullName: normalized.split('@')[0] || normalized,
+        createdAt: Date.now(),
+      }
+      writeDemoUsers(users)
+    }
+    writeDemoSession(normalized)
+    return { error: null }
   }, [])
 
   const signOut = useCallback(async () => {
-    await supabase.auth.signOut()
+    clearDemoSession()
   }, [])
 
   return (

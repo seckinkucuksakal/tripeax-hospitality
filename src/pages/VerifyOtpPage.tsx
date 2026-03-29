@@ -2,7 +2,11 @@ import { type FormEvent, useMemo, useState, useEffect, useCallback } from "react
 import { useNavigate, useLocation } from "react-router-dom";
 import { useLanguage } from "@/lib/LanguageContext";
 import { useAuth } from "@/lib/AuthContext";
-import { supabase } from "@/lib/supabase";
+import {
+  verifyPendingSignupOtp,
+  resendPendingSignupOtp,
+  writeDemoSession,
+} from "@/lib/demo-auth-storage";
 import {
   InputOTP,
   InputOTPGroup,
@@ -56,17 +60,15 @@ export default function VerifyOtpPage() {
       setSubmitting(true);
 
       try {
-        const { error: verifyError } = await supabase.auth.verifyOtp({
-          email,
-          token: otp,
-          type: "signup",
-        });
+        const { ok } = verifyPendingSignupOtp(email, otp);
 
-        if (verifyError) {
+        if (!ok) {
           setError(copy.otpInvalid);
           setOtp("");
           return;
         }
+
+        writeDemoSession(email);
       } catch {
         setError(copy.submitErrorGeneric);
       } finally {
@@ -81,16 +83,7 @@ export default function VerifyOtpPage() {
     setError(null);
     setInfo(null);
 
-    const { error: resendError } = await supabase.auth.resend({
-      type: "signup",
-      email,
-    });
-
-    if (resendError) {
-      setError(resendError.message);
-      return;
-    }
-
+    resendPendingSignupOtp(email);
     setInfo(copy.otpResent);
     setCooldown(RESEND_COOLDOWN_SECONDS);
   }

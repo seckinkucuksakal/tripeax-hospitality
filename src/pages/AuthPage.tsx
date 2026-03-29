@@ -3,43 +3,14 @@ import { useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useLanguage } from "@/lib/LanguageContext";
 import { DEMO_PAYMENT_COMPLETE_KEY } from "@/lib/demo-payment";
+import {
+  readDemoUsers,
+  writeDemoUsers,
+  writeDemoSession,
+  DEMO_PASSWORD,
+} from "@/lib/demo-auth-storage";
 
 type Mode = "register" | "login";
-
-type UserRecord = {
-  email: string;
-  fullName: string;
-  phone?: string;
-  whatsapp?: string;
-  createdAt: number;
-};
-
-const USERS_KEY = "tripeax_demo_users_v1";
-const SESSION_KEY = "tripeax_demo_session_v1";
-
-function readUsers(): Record<string, UserRecord> {
-  try {
-    const raw = localStorage.getItem(USERS_KEY);
-    if (!raw) return {};
-    return JSON.parse(raw) as Record<string, UserRecord>;
-  } catch {
-    return {};
-  }
-}
-
-function writeUsers(users: Record<string, UserRecord>) {
-  localStorage.setItem(USERS_KEY, JSON.stringify(users));
-}
-
-function setSession(email: string) {
-  localStorage.setItem(
-    SESSION_KEY,
-    JSON.stringify({
-      email,
-      createdAt: Date.now(),
-    }),
-  );
-}
 
 export default function AuthPage() {
   const { t, lang, setLang } = useLanguage();
@@ -48,8 +19,6 @@ export default function AuthPage() {
 
   const initialMode: Mode = (searchParams.get("mode") as Mode | null) === "login" ? "login" : "register";
   const [mode, setMode] = useState<Mode>(initialMode);
-
-  const demoPassword = "123";
 
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -60,13 +29,13 @@ export default function AuthPage() {
     phone: "",
     whatsapp: "",
     sameNumber: false,
-    password: demoPassword,
-    confirmPassword: demoPassword,
+    password: DEMO_PASSWORD,
+    confirmPassword: DEMO_PASSWORD,
   });
 
   const [loginForm, setLoginForm] = useState({
     email: "",
-    password: demoPassword,
+    password: DEMO_PASSWORD,
   });
 
   const copy = useMemo(() => t.auth, [t.auth]);
@@ -84,7 +53,7 @@ export default function AuthPage() {
     e.stopPropagation();
     setError(null);
     const email = registerForm.email.trim() || "dev-bypass@local.local";
-    const users = readUsers();
+    const users = readDemoUsers();
     users[email] = {
       email,
       fullName: registerForm.fullName.trim() || email.split("@")[0],
@@ -94,8 +63,8 @@ export default function AuthPage() {
         : registerForm.whatsapp.trim() || undefined,
       createdAt: Date.now(),
     };
-    writeUsers(users);
-    setSession(email);
+    writeDemoUsers(users);
+    writeDemoSession(email);
     try {
       localStorage.removeItem(DEMO_PAYMENT_COMPLETE_KEY);
     } catch {
@@ -116,17 +85,17 @@ export default function AuthPage() {
         return;
       }
 
-      if (registerForm.password !== demoPassword) {
+      if (registerForm.password !== DEMO_PASSWORD) {
         setError(copy.validationPasswordMustBe123);
         return;
       }
 
-      if (registerForm.confirmPassword !== demoPassword || registerForm.confirmPassword !== registerForm.password) {
+      if (registerForm.confirmPassword !== DEMO_PASSWORD || registerForm.confirmPassword !== registerForm.password) {
         setError(copy.validationConfirmPasswordMismatch);
         return;
       }
 
-      const users = readUsers();
+      const users = readDemoUsers();
       users[email] = {
         email,
         fullName: registerForm.fullName.trim() || email.split("@")[0],
@@ -134,8 +103,8 @@ export default function AuthPage() {
         whatsapp: registerForm.sameNumber ? (registerForm.phone.trim() || undefined) : registerForm.whatsapp.trim() || undefined,
         createdAt: Date.now(),
       };
-      writeUsers(users);
-      setSession(email);
+      writeDemoUsers(users);
+      writeDemoSession(email);
       try {
         localStorage.removeItem(DEMO_PAYMENT_COMPLETE_KEY);
       } catch {
@@ -163,12 +132,12 @@ export default function AuthPage() {
         return;
       }
 
-      if (loginForm.password !== demoPassword) {
+      if (loginForm.password !== DEMO_PASSWORD) {
         setError(copy.validationPasswordMustBe123);
         return;
       }
 
-      const users = readUsers();
+      const users = readDemoUsers();
       if (!users[email]) {
         // Dummy behavior: login can work even if the user didn't register before.
         users[email] = {
@@ -176,10 +145,10 @@ export default function AuthPage() {
           fullName: email.split("@")[0],
           createdAt: Date.now(),
         };
-        writeUsers(users);
+        writeDemoUsers(users);
       }
 
-      setSession(email);
+      writeDemoSession(email);
       navigate("/home");
     } catch {
       setError(copy.submitErrorGeneric);

@@ -1,10 +1,9 @@
-import { supabase } from './supabase'
+import { getLocalSessionFromStorage } from './demo-auth-storage'
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? ''
 
 async function getAccessToken(): Promise<string | null> {
-  const { data } = await supabase.auth.getSession()
-  return data.session?.access_token ?? null
+  return getLocalSessionFromStorage()?.access_token ?? null
 }
 
 async function request<T>(
